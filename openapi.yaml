@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Pukaist Engine API
+  description: Local-first document processing pipeline with geospatial context, OCR, LLM, and forensic analysis.
+  version: 0.1.0
+  contact:
+    name: Pukaist Engine Team
+    email: support@pukaist.io
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.pukaist.io/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Doc:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        summary:
+          type: string
+        theme:
+          type: string
+        doc_type:
+          type: string
+        status:
+          type: string
+          enum: [not_started, pending, processing, done, error, flagged]
+        lat:
+          type: number
+          nullable: true
+        lng:
+          type: number
+          nullable: true
+        created_at:
+          type: integer
+
+    UploadResponse:
+      type: object
+      properties:
+        job_id:
+          type: integer
+          nullable: true
+        task_id:
+          type: string
+          nullable: true
+        stored_as:
+          type: string
+        theme:
+          type: string
+        enqueued:
+          type: boolean
+        deduped:
+          type: boolean
+        sha256:
+          type: string
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        events:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        created_at:
+          type: integer
+
+    SignedUploadResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+        upload_id:
+          type: string
+        expires_at:
+          type: integer
+        fields:
+          type: object
+
+    WhoamiResponse:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+paths:
+  /whoami:
+    get:
+      summary: Get current identity
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WhoamiResponse'
+
+  /upload/signed-url:
+    post:
+      summary: Get signed upload URL
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                content_type:
+                  type: string
+      responses:
+        '200':
+          description: Signed URL details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignedUploadResponse'
+
+  /webhooks:
+    get:
+      summary: List webhooks
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+    post:
+      summary: Register webhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Created webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /jobs/{job_id}/tasks:
+    get:
+      summary: Get job tasks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of tasks for job
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        status:
+                          type: string
+                        step:
+                          type: string

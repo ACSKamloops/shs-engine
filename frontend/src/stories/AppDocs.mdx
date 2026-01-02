@@ -1,0 +1,56 @@
+import { Meta } from "@storybook/addon-docs";
+
+<Meta title="Demo/App Docs" />
+
+# Pukaist UI Demo
+
+This story documents the demo wiring used in Storybook so you can run the UI offline and understand the expected backend shape.
+
+## API expectations
+
+The app expects:
+
+- `GET /docs?limit=20&q=...` → `{ docs: Doc[] }` or `{ results: Doc[] }`
+- `GET /docs/:id` → `Doc`
+- `GET /docs/:id/artifact` → `Artifact`
+- `GET /docs/:id/file?token=...` → downloads the source file
+
+Doc fields used by the UI:
+
+- `id` (number)
+- `title`, `summary`, `theme`, `doc_type`
+- `created_at` (unix seconds)
+- `lat`, `lng` (for map)
+- `status` (`reviewed`|`follow_up`|`not_started`)
+- `relevant` (boolean)
+
+Artifact fields used by the UI:
+
+- `content_preview` (OCR text)
+- `summary`
+- `metadata.pages`, `metadata.confidence`, `metadata.source`
+- `insights` (free-form object)
+
+## Storybook mocks
+
+`AppInteractive` uses a fetch-mocking decorator that returns sample docs and artifacts so you can click through review → select doc → insights without a backend.
+
+## Keyboard shortcuts
+
+- `j`/`→` next in review queue
+- `k`/`←` previous in review queue
+
+## Smoke test
+
+- Playwright smoke: `npm run test:smoke` (uses `PLAYWRIGHT_BASE_URL` or defaults to `http://localhost:4173`).
+- Make sure the app is served (e.g., `npm run dev` or `npm run preview`) before running.
+- Helper: `npm run test:smoke:preview` will spin up `npm run preview` on port 4173, run the smoke, then stop the server.
+- To point Storybook at a real API, set `VITE_STORYBOOK_API_BASE` (mocking will be skipped).
+- Live smoke option: `npm run test:smoke:live` (defaults to `http://localhost:8000` unless `PLAYWRIGHT_BASE_URL` is set) to hit a running backend.
+- Custom-layer smoke uploads a tiny GeoJSON fixture; KMZ/KML are converted inline (KMZ unzips first KML).
+- Storybook has `Demo/App Custom Layer`, which seeds a violet demo layer via localStorage so you can see the Converted/Loaded pill without uploading.
+
+## Frame/dimming
+
+- Frame applies theme/period filters; optional dimming mutes out-of-frame docs on map and list.
+- Confidence/pages badges are toggled in Filters.

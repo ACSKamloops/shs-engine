@@ -1,0 +1,4 @@
+DEMO_MAP_001
+Survey note referring to a sketch map and boundary markers near IR.
+Mentions survey sketch, boundary markers, coordinates.
+Keywords: survey sketch, boundary, map, marker.

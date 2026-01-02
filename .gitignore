@@ -1,0 +1,40 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.env.local
+.DS_Store
+
+# Local working data
+99_Working_Files/
+01_Internal_Reports/
+*.db
+*.sqlite
+*.sqlite3
+
+# Geo data caches (downloaded locally; keep out of git)
+Geo/*.geojson
+Geo/aoi/
+Geo/raw/
+Geo/downloads/
+Geo/bc_interior/
+
+# Node / TS artifacts (if added later)
+node_modules/
+dist/
+build/
+storybook-static/
+
+# Frontend local geo caches
+frontend/public/geo/
+
+# Data folders (large files)
+Pukaist/
+quality_checks/
+logs/*.log
+

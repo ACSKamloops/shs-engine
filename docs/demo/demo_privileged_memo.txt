@@ -1,0 +1,4 @@
+DEMO_PRIV_001
+Internal memo containing legal advice; treat as privileged for review.
+Mentions legal advice, privileged, internal discussion.
+Keywords: privileged, legal advice, internal memo.

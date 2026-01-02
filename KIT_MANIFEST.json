@@ -1,0 +1,29 @@
+{
+  "exported_at": "20251211_181627",
+  "source_base_dir": "/mnt/c/Users/Astra/Documents/Pukaist/Reference Material",
+  "include_paths": [
+    ".env.example",
+    "agents.md",
+    "Agent_Instructions",
+    ".codex/skills",
+    "99_Working_Files/refinement_workflow.py",
+    "99_Working_Files/codex_pipeline_config.py",
+    "99_Working_Files/pukaist_config.py",
+    "99_Working_Files/Utilities/codex_exec_analysis_schema.json",
+    "99_Working_Files/Utilities/codex_exec_prompt_template.md",
+    "99_Working_Files/Utilities/codex_exec_runner.sh",
+    "99_Working_Files/Utilities/pukaist_execpolicy.rules.example",
+    "99_Working_Files/Scripts/Queue_Management/reap_stale_locks.py",
+    "99_Working_Files/Scripts/Queue_Management/web_dashboard",
+    "99_Working_Files/Scripts/Queue_Management/codex_pipeline_kit/README.md",
+    "99_Working_Files/Scripts/Queue_Management/codex_pipeline_kit/SYSTEM_OVERVIEW.md",
+    "99_Working_Files/Scripts/Queue_Management/codex_pipeline_kit/add_theme.py",
+    "99_Working_Files/Scripts/Queue_Management/codex_pipeline_kit/heartbeat_renew_lock.py",
+    "99_Working_Files/Utilities/audit_task_overlap.py",
+    "99_Working_Files/Utilities/audit_pending_duplication.py",
+    "99_Working_Files/Utilities/audit_format_duplicates.py",
+    "99_Working_Files/Utilities/fix_format_duplicates.py",
+    "99_Working_Files/Utilities/sync_refined_to_queues.py"
+  ],
+  "notes": "No evidence or indexes copied. Adapt pukaist_config.py paths for target project."
+}

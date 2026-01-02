@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pukaist Engine Web Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Manrope", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #0b1224;
+        color: #e2e8f0;
+      }
+      #workspace {
+        position: relative;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.2), transparent 35%),
+          radial-gradient(circle at 80% 0%, rgba(34, 211, 238, 0.2), transparent 30%),
+          #0b1224;
+      }
+      .note {
+        background: linear-gradient(135deg, rgba(56, 189, 248, 0.12), rgba(129, 140, 248, 0.12));
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        padding: 0.9rem 1rem;
+        border-radius: 12px;
+        color: #e0f2fe;
+      }
+      header {
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 0.75rem;
+        max-width: 1100px;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 1.25rem 2rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr);
+        gap: 1rem;
+      }
+      @media (max-width: 900px) {
+        main {
+          display: block;
+        }
+      }
+      section {
+        margin-bottom: 1.2rem;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        padding: 1rem;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.7);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      }
+      label {
+        display: inline-block;
+        margin-right: 0.5rem;
+      }
+      #map {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+      #left-rail {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        bottom: 16px;
+        width: 400px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        backdrop-filter: blur(12px);
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px;
+        overflow-y: auto;
+      }
+      #inspector {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        bottom: 16px;
+        width: 420px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        backdrop-filter: blur(12px);
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 16px;
+        overflow-y: auto;
+      }
+      .viewer {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.7);
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .viewer img,
+      .viewer iframe {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border: none;
+      }
+      .inspector-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 1100px) {
+        .inspector-body {
+          grid-template-columns: 1fr;
+        }
+      }
+      .hidden {
+        display: none !important;
+      }
+      pre {
+        background: rgba(15, 23, 42, 0.9);
+        padding: 0.75rem;
+        overflow: auto;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      .dropzone {
+        border: 2px dashed rgba(94, 234, 212, 0.8);
+        padding: 1rem;
+        border-radius: 14px;
+        background: rgba(15, 118, 110, 0.1);
+        color: #ccfbf1;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .dropzone.hover {
+        background: rgba(16, 185, 129, 0.18);
+        border-color: rgba(16, 185, 129, 0.9);
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.15);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        font-size: 0.85rem;
+        color: #e2e8f0;
+      }
+      .grid-two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      @media (max-width: 700px) {
+        .grid-two {
+          grid-template-columns: 1fr;
+        }
+      }
+      button.primary {
+        background: linear-gradient(135deg, #22d3ee, #818cf8);
+        color: #0b1120;
+        border: none;
+        padding: 0.55rem 1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(129, 140, 248, 0.35);
+        transition: transform 0.12s ease, box-shadow 0.12s ease;
+      }
+      button.primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 15px 35px rgba(129, 140, 248, 0.45);
+      }
+      input {
+        background: rgba(15, 23, 42, 0.6);
+        color: #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 0.45rem 0.6rem;
+        border-radius: 10px;
+      }
+      input:focus {
+        outline: 2px solid rgba(94, 234, 212, 0.5);
+        border-color: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="h-screen w-screen relative overflow-hidden" id="workspace">
+      <!-- Layer 1: Map covers full screen -->
+      <div id="map" aria-label="Map canvas" class="absolute inset-0 z-0"></div>
+
+      <!-- Layer 2: Left floating sidebar -->
+      <aside
+        class="absolute left-4 top-4 bottom-4 w-[400px] z-10 flex flex-col gap-4 backdrop-blur-md bg-slate-900/80 border border-white/10 rounded-xl p-4 overflow-y-auto"
+        id="left-rail"
+      >
+        <div class="rail-section">
+          <div class="rail-header">
+            <div>
+              <p class="rail-title">Mission Focus</p>
+              <p class="rail-sub">Set intent for relevance and filters.</p>
+            </div>
+          </div>
+          <input id="mission-input" class="w-full" placeholder="e.g. Coastal damage, levee breaches, land surveys" />
+          <div class="flex flex-wrap gap-2 mt-2">
+            <span class="pill" id="active-tags">Active tags: (set targets via env or wizard)</span>
+            <label class="pill" style="background: rgba(56,189,248,0.15);">
+              API <input id="api-base" value="http://localhost:8000" size="18" />
+            </label>
+            <label class="pill" style="background: rgba(148,163,184,0.18);">
+              Key <input id="api-key" value="dev-token" size="8" />
+            </label>
+            <label class="pill">Key <input id="api-key" value="dev-token" size="8" /></label>
+          </div>
+        </div>
+
+        <div class="rail-section">
+          <div class="rail-header">
+            <div>
+              <p class="rail-title">Ingestion Pipeline</p>
+              <p class="rail-sub">Drop files here or onto the map.</p>
+            </div>
+            <button id="upload-btn" class="primary">Upload</button>
+          </div>
+          <div id="ocr-drop" class="dropzone">
+            <div><strong>Drop files or click to select</strong></div>
+            <div style="margin-top:0.25rem; font-size:0.9rem;">Images & PDFs · OCR (Hunyuan/pytesseract)</div>
+            <input type="file" id="ocr-file" style="display:none;" />
+          </div>
+          <div class="rail-controls">
+            <label>Theme: <input id="ocr-theme" value="ocr_handwriting" /></label>
+            <label><input type="checkbox" id="ocr-dedupe" /> Allow dedupe</label>
+            <label>Alt upload: <input type="file" id="file" /></label>
+          </div>
+          <div class="queue" id="ingest-queue"></div>
+          <pre id="upload-out" class="slim-pre"></pre>
+        </div>
+
+        <div class="rail-section">
+          <div class="rail-header">
+            <div>
+              <p class="rail-title">Search & Feed</p>
+              <p class="rail-sub">Sorted by relevance when available.</p>
+            </div>
+            <button id="docs-btn" class="primary" style="background: rgba(148, 163, 184, 0.2); color: #e2e8f0;">Recent</button>
+          </div>
+          <div class="rail-controls">
+            <label>Query: <input id="search-q" size="24" /></label>
+            <button id="search-btn" class="primary">Search</button>
+          </div>
+          <div id="feed"></div>
+          <pre id="search-out" class="slim-pre"></pre>
+        </div>
+
+        <div class="rail-section">
+          <div class="rail-header">
+            <div>
+              <p class="rail-title">Ops</p>
+              <p class="rail-sub">Jobs, tasks, queue status.</p>
+            </div>
+            <button id="queue-status-btn" class="primary" style="background: rgba(94, 234, 212, 0.18); color: #ccfbf1;">Queue</button>
+          </div>
+          <div class="grid-two">
+            <button id="jobs-btn" class="primary" style="background: rgba(148, 163, 184, 0.2); color: #e2e8f0;">Jobs</button>
+            <label>Job ID: <input id="job-id" size="6" /></label>
+            <button id="job-summary-btn" class="primary" style="background: rgba(129, 140, 248, 0.2); color: #c7d2fe;">Job summary</button>
+            <button id="job-tasks-btn" class="primary" style="background: rgba(94, 234, 212, 0.25); color: #ccfbf1;">Job tasks</button>
+          </div>
+          <div class="grid-two" style="margin-top:0.5rem;">
+            <button id="flagged-btn" class="primary" style="background: rgba(248, 113, 113, 0.2); color: #fecdd3;">Flagged</button>
+            <button id="geo-btn" class="primary" style="background: rgba(94, 234, 212, 0.25); color: #ccfbf1;">Reload Geo</button>
+          </div>
+          <pre id="ops-out" class="slim-pre"></pre>
+        </div>
+      </aside>
+
+      <!-- Layer 3: Right floating inspector -->
+      <div
+        id="inspector"
+        class="hidden absolute right-4 top-4 bottom-4 w-[420px] z-10 flex flex-col gap-3 backdrop-blur-md bg-slate-900/85 border border-white/10 rounded-xl p-4 overflow-y-auto"
+      >
+        <div class="inspector-header">
+          <div>
+            <p class="rail-title" id="inspector-title">Document</p>
+            <p class="rail-sub" id="inspector-meta"></p>
+          </div>
+          <button id="inspector-close" class="primary" style="background: rgba(248, 113, 113, 0.2); color: #fecdd3;">Close</button>
+        </div>
+        <div class="inspector-body">
+          <div class="inspector-pane">
+            <p class="rail-sub">Source Preview</p>
+            <div class="viewer" id="inspector-source">No preview</div>
+          </div>
+          <div class="inspector-pane">
+            <p class="rail-sub">OCR Output</p>
+            <pre id="inspector-ocr" class="slim-pre"></pre>
+          </div>
+          <div class="inspector-pane">
+            <p class="rail-sub">Relevancy & Metadata</p>
+            <div id="inspector-rel" class="pill" style="margin-bottom:0.5rem;">No score</div>
+            <pre id="inspector-meta-json" class="slim-pre"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const apiBaseInput = document.getElementById("api-base");
+      const apiKeyInput = document.getElementById("api-key");
+      const useBearerInput = document.getElementById("use-bearer");
+      const feedEl = document.getElementById("feed");
+      const queueEl = document.getElementById("ingest-queue");
+      const inspectorEl = document.getElementById("inspector");
+      const inspectorTitle = document.getElementById("inspector-title");
+      const inspectorMeta = document.getElementById("inspector-meta");
+      const inspectorOcr = document.getElementById("inspector-ocr");
+      const inspectorRel = document.getElementById("inspector-rel");
+      const inspectorMetaJson = document.getElementById("inspector-meta-json");
+      const inspectorSource = document.getElementById("inspector-source");
+      const missionInput = document.getElementById("mission-input");
+      const activeTags = document.getElementById("active-tags");
+
+      async function api(path, opts = {}) {
+        const base = apiBaseInput.value.replace(/\/$/, "");
+        const headers = { ...(opts.headers || {}) };
+        const token = apiKeyInput.value;
+        // Always use X-API-Key for this demo
+        headers["X-API-Key"] = token;
+        const resp = await fetch(base + path, { ...opts, headers });
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error("HTTP " + resp.status + ": " + text);
+        }
+        return resp.json();
+      }
+
+      function renderQueueCard({ id, name, status, score }) {
+        const pill = score ? `<span class="pill" style="background:rgba(94,234,212,0.18);color:#ccfbf1;">Relevance ${score}/100</span>` : "";
+        return `<div class="glass" style="padding:0.6rem 0.8rem; border-radius:12px; margin-bottom:0.35rem;">
+          <div class="flex-row">
+            <span class="pill" style="background:rgba(129,140,248,0.18);">${status}</span>
+            ${pill}
+          </div>
+          <div class="rail-sub" style="margin-top:0.25rem;">${name} · task ${id}</div>
+        </div>`;
+      }
+
+      function updateQueue(taskId, name, status, score) {
+        queueEl.dataset[`task${taskId}`] = status;
+        queueEl.innerHTML = renderQueueCard({ id: taskId, name, status, score }) + queueEl.innerHTML;
+      }
+
+      function showFeed(items) {
+        if (!items || !items.length) {
+          feedEl.innerHTML = '<p class="rail-sub">No documents loaded.</p>';
+          return;
+        }
+        feedEl.innerHTML = items
+          .map((item) => {
+            const rel = item.relevancy && item.relevancy.score !== undefined ? `<span class="pill" style="background:rgba(94,234,212,0.18);color:#ccfbf1;">${item.relevancy.score}/100</span>` : "";
+            return `<div class="glass" style="padding:0.8rem;border-radius:12px;margin-bottom:0.4rem;cursor:pointer;" data-doc="${item.id}">
+                <div class="flex-row">
+                  <span class="pill">${item.theme || "untagged"}</span>${rel}
+                </div>
+                <div class="rail-title" style="margin-top:0.25rem;">${item.title || "Doc #" + item.id}</div>
+                <div class="rail-sub">ID ${item.id}</div>
+              </div>`;
+          })
+          .join("");
+        feedEl.querySelectorAll("[data-doc]").forEach((el) => {
+          el.onclick = async () => {
+            const id = el.getAttribute("data-doc");
+            try {
+              const artifact = await api(`/docs/${id}/artifact`);
+              openInspector(artifact, Number(id));
+            } catch (err) {
+              console.error(err);
+            }
+          };
+        });
+      }
+
+      async function loadDocs() {
+        try {
+          const res = await api("/docs?limit=50");
+          const docs = res.docs || [];
+          // Sort by relevance score if present
+          docs.sort((a, b) => (b.relevancy?.score || 0) - (a.relevancy?.score || 0));
+          showFeed(docs);
+        } catch (err) {
+          console.error("Docs load error:", err);
+          feedEl.innerHTML = '<p class="rail-sub">Failed to load docs.</p>';
+        }
+      }
+
+      function openInspector(artifact, docId) {
+        inspectorTitle.textContent = artifact.title || `Doc #${docId}`;
+        inspectorMeta.textContent = `Doc ${docId} · Theme ${artifact.theme || "n/a"} · Type ${artifact.metadata?.doc_type || "n/a"}`;
+        inspectorOcr.textContent = artifact.content_preview || artifact.ocr_text || "(no preview)";
+        // Source preview (images/PDF)
+        inspectorSource.innerHTML = "No preview";
+        if (artifact.file_path) {
+          const ext = (artifact.file_path.split(".").pop() || "").toLowerCase();
+          const src = `${apiBaseInput.value.replace(/\/$/, "")}/docs/${docId}/file?token=${encodeURIComponent(apiKeyInput.value)}`;
+          if (["png", "jpg", "jpeg", "tif", "tiff", "bmp", "webp"].includes(ext)) {
+            inspectorSource.innerHTML = `<img src="${src}" alt="Source image" />`;
+          } else if (ext === "pdf") {
+            inspectorSource.innerHTML = `<iframe src="${src}" title="Source PDF"></iframe>`;
+          } else {
+            inspectorSource.innerHTML = `<a href="${src}" target="_blank" class="pill">Download source</a>`;
+          }
+        }
+        if (artifact.relevancy && artifact.relevancy.score !== undefined) {
+          inspectorRel.textContent = `Relevancy ${artifact.relevancy.score}/100 — ${artifact.relevancy.rationale || ""}`;
+        } else {
+          inspectorRel.textContent = "No relevancy score";
+        }
+        inspectorMetaJson.textContent = JSON.stringify(artifact, null, 2);
+        inspectorEl.classList.remove("hidden");
+      }
+
+      // Upload
+      document.getElementById("upload-btn").onclick = async () => {
+        const out = document.getElementById("upload-out");
+        const fileInput = document.getElementById("file");
+        const file = fileInput.files[0];
+        if (!file) {
+          out.textContent = "No file selected.";
+          return;
+        }
+        out.textContent = "Uploading...";
+        try {
+          const form = new FormData();
+          form.append("file", file);
+          const res = await api("/upload", { method: "POST", body: form });
+          updateQueue(res.task_id || "-", file.name, res.task_id ? "enqueued" : "stored", res.relevancy?.score);
+          out.textContent = JSON.stringify(res, null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      // Search
+      document.getElementById("search-btn").onclick = async () => {
+        const out = document.getElementById("search-out");
+        const q = document.getElementById("search-q").value.trim();
+        if (!q) {
+          out.textContent = "Enter a query.";
+          return;
+        }
+        out.textContent = "Searching...";
+        try {
+          const params = new URLSearchParams({ q, limit: "20" });
+          const res = await api("/search?" + params.toString());
+          out.textContent = JSON.stringify(res.results || [], null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      // Recent docs
+      document.getElementById("docs-btn").onclick = async () => {
+        const out = document.getElementById("search-out");
+        out.textContent = "Loading docs...";
+        try {
+          await loadDocs();
+          out.textContent = "Loaded recent docs.";
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      // Ops: jobs, tasks, flagged, queue
+      document.getElementById("jobs-btn").onclick = async () => {
+        const out = document.getElementById("ops-out");
+        out.textContent = "Loading jobs...";
+        try {
+          const res = await api("/jobs?limit=20");
+          out.textContent = JSON.stringify(res.jobs || [], null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      document.getElementById("job-summary-btn").onclick = async () => {
+        const out = document.getElementById("ops-out");
+        const jobId = document.getElementById("job-id").value.trim();
+        if (!jobId) {
+          out.textContent = "Enter a Job ID.";
+          return;
+        }
+        out.textContent = "Loading job summary...";
+        try {
+          const res = await api(`/jobs/${jobId}/summary`);
+          out.textContent = JSON.stringify(res, null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      document.getElementById("job-tasks-btn").onclick = async () => {
+        const out = document.getElementById("ops-out");
+        const jobId = document.getElementById("job-id").value.trim();
+        if (!jobId) {
+          out.textContent = "Enter a Job ID.";
+          return;
+        }
+        out.textContent = "Loading job tasks...";
+        try {
+          const res = await api(`/jobs/${jobId}/tasks`);
+          out.textContent = JSON.stringify(res.tasks || [], null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      document.getElementById("flagged-btn").onclick = async () => {
+        const out = document.getElementById("ops-out");
+        out.textContent = "Loading flagged tasks...";
+        try {
+          const res = await api("/tasks/flagged?limit=20");
+          out.textContent = JSON.stringify(res.tasks || [], null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      document.getElementById("queue-status-btn").onclick = async () => {
+        const out = document.getElementById("ops-out");
+        out.textContent = "Loading queue status...";
+        try {
+          const res = await api("/status");
+          out.textContent = JSON.stringify(res.queue || {}, null, 2);
+        } catch (err) {
+          out.textContent = "Error: " + err;
+        }
+      };
+
+      // OCR drop handling
+      const ocrDrop = document.getElementById("ocr-drop");
+      const ocrFileInput = document.getElementById("ocr-file");
+      const ocrOut = document.getElementById("ocr-out");
+
+      function setOcrStatus(text) {
+        ocrOut.textContent = text;
+      }
+      function toggleOcrHover(on) {
+        ocrDrop.classList[on ? "add" : "remove"]("hover");
+      }
+
+      async function pollOcr(taskId, startedAt) {
+        const elapsed = Math.round((Date.now() - startedAt) / 1000);
+        if (elapsed > 180) {
+          setOcrStatus(`Task ${taskId}: timed out waiting for worker. Check worker logs.`);
+          return;
+        }
+        try {
+          const task = await api(`/tasks/${taskId}`);
+          if (task.status === "done") {
+          const doc = await api(`/tasks/${taskId}/doc`);
+          const artifact = await api(`/docs/${doc.id}/artifact`);
+          const preview = artifact.content_preview || artifact.ocr_text || "(no preview field)";
+          const meta = [];
+          if (artifact.title) meta.push(`title="${artifact.title}"`);
+          if (artifact.theme) meta.push(`theme=${artifact.theme}`);
+          let relevancy = "";
+          if (artifact.relevancy && artifact.relevancy.score !== undefined) {
+            relevancy = `Relevancy: ${artifact.relevancy.score}/100 — ${artifact.relevancy.rationale || ""}`;
+          }
+          updateQueue(taskId, file.name || doc.id, "done", artifact.relevancy?.score);
+          openInspector(artifact, doc.id);
+          setOcrStatus(
+            `Task ${taskId} → doc ${doc.id} [${meta.join(" ")}]\n${relevancy}\n\nOCR Preview:\n${preview}\n\nArtifact JSON:\n` +
+              JSON.stringify(artifact, null, 2),
+          );
+          return;
+          }
+          if (task.status === "flagged") {
+            setOcrStatus(`Task ${taskId} flagged: ${task.last_error || "see logs"}`);
+            return;
+          }
+          setOcrStatus(`Task ${taskId} status=${task.status} (elapsed ${elapsed}s)...`);
+        } catch (err) {
+          setOcrStatus(`Task ${taskId} poll error: ${err}`);
+          return;
+        }
+        setTimeout(() => pollOcr(taskId, startedAt), 2000);
+      }
+
+      async function handleOcrFile(file) {
+        const theme = document.getElementById("ocr-theme").value.trim() || "ocr_handwriting";
+        const dedupe = document.getElementById("ocr-dedupe").checked;
+        setOcrStatus(`Uploading ${file.name} for OCR...`);
+        try {
+          const form = new FormData();
+          form.append("file", file);
+          const params = new URLSearchParams({
+            enqueue: "true",
+            dedupe: dedupe ? "true" : "false",
+            theme,
+          });
+          const res = await api("/upload?" + params.toString(), { method: "POST", body: form });
+          if (!res.task_id) {
+            setOcrStatus("Uploaded but no task enqueued (likely deduped). Toggle off dedupe to force processing.");
+            return;
+          }
+          updateQueue(res.task_id, file.name, "enqueued", res.relevancy?.score);
+          setOcrStatus(`Enqueued task ${res.task_id}; polling worker...`);
+          pollOcr(res.task_id, Date.now());
+        } catch (err) {
+          setOcrStatus("Error: " + err);
+        }
+      }
+
+      ocrDrop.onclick = () => ocrFileInput.click();
+      ocrDrop.ondragover = (e) => {
+        e.preventDefault();
+        toggleOcrHover(true);
+      };
+      ocrDrop.ondragleave = (e) => {
+        e.preventDefault();
+        toggleOcrHover(false);
+      };
+      ocrDrop.ondrop = (e) => {
+        e.preventDefault();
+        toggleOcrHover(false);
+        if (!e.dataTransfer.files || !e.dataTransfer.files.length) return;
+        handleOcrFile(e.dataTransfer.files[0]);
+      };
+      ocrFileInput.onchange = (e) => {
+        const input = e.target;
+        if (!input.files || !input.files.length) return;
+        handleOcrFile(input.files[0]);
+        input.value = "";
+      };
+
+      // Map / GeoJSON
+      let map = L.map("map").setView([0, 0], 2);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> contributors',
+      }).addTo(map);
+      let geoLayer = L.geoJSON(null, {
+        onEachFeature: (feature, layer) => {
+          const props = feature.properties || {};
+          if (props.doc_id) {
+            layer.on("click", async () => {
+              try {
+                const artifact = await api(`/docs/${props.doc_id}/artifact`);
+                openInspector(artifact, props.doc_id);
+              } catch (err) {
+                console.error("Inspector load error:", err);
+              }
+            });
+          }
+        },
+      }).addTo(map);
+
+      async function reloadGeo() {
+        try {
+          const params = new URLSearchParams({ limit: "100" });
+          const res = await api("/geojson?" + params.toString());
+          geoLayer.clearLayers();
+          if (res && res.features && res.features.length) {
+            geoLayer.addData(res);
+            const bounds = geoLayer.getBounds();
+            if (bounds.isValid()) {
+              map.fitBounds(bounds.pad(0.2));
+            }
+          }
+        } catch (err) {
+          console.error("GeoJSON error:", err);
+        }
+      }
+
+      document.getElementById("geo-btn").onclick = reloadGeo;
+      // Initial load
+      reloadGeo();
+      loadDocs();
+
+      // Inspector close
+      document.getElementById("inspector-close").onclick = () => inspectorEl.classList.add("hidden");
+
+      // Mission tags (read targets from env hint if provided)
+      const targetsEnv = (document.documentElement.dataset?.targets || "").trim();
+      if (targetsEnv) {
+        activeTags.textContent = "Active tags: " + targetsEnv;
+      }
+    </script>
+  </body>
+</html>

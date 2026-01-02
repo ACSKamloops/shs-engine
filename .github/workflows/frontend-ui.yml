@@ -1,0 +1,64 @@
+name: Frontend UI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Smoke (preview + Playwright)
+        run: npm run test:smoke:preview
+
+      - name: Smoke (live) [optional]
+        if: ${{ env.PLAYWRIGHT_BASE_URL != '' }}
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ env.PLAYWRIGHT_BASE_URL }}
+        run: npm run test:smoke:live
+
+      - name: E2E (mocked)
+        run: npm run test:e2e -- tests/pipeline.spec.ts tests/map.spec.ts tests/artifact.spec.ts tests/logs.spec.ts tests/jobs.spec.ts
+
+      - name: Upload Playwright artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            frontend/test-results/**
+            /tmp/pukaist_preview.log
+            /tmp/pukaist_preview_build.log
+          if-no-files-found: ignore
+
+      - name: Build app
+        run: npm run build
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Upload Storybook (Chromatic)
+        # Optional visual regression. Runs only on push when a Chromatic token is present.
+        if: ${{ (env.CHROMATIC_PROJECT_TOKEN != '' || secrets.CHROMATIC_PROJECT_TOKEN != '') && github.event_name == 'push' }}
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: npm run chromatic -- --only-changed --storybook-build-dir=storybook-static --exit-zero-on-changes
