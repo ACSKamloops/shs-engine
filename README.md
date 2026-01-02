@@ -4,7 +4,7 @@ A modern, AI-enhanced platform for managing cultural materials, camp documentati
 
 ## 🌲 Overview
 
-SHS Engine is built on a proven document processing pipeline (adapted from Pukaist Engine) designed for:
+SHS Engine is built on a proven document processing pipeline designed for:
 
 - **Cultural Material Processing** - OCR and digitization of photos, documents, and media from cultural camps
 - **Searchable Archive** - AI-powered search across all indexed materials
@@ -58,7 +58,6 @@ shs-engine/
 │   ├── smart_ocr_parallel.py # OCR processing
 │   ├── ocr_qa_test.py       # Quality assurance
 │   └── start-stack.sh       # Start all services
-├── .github/workflows/       # CI/CD and deployment
 └── docs/                    # Documentation
 ```
 
@@ -97,32 +96,38 @@ cd frontend && npm run dev
 
 ## 🌐 Deployment to Hostinger
 
-### Option A: Hostinger Horizons (AI-Designed Landing)
+### Deploy via Node.js Web App + GitHub (Recommended)
 
-1. Log into Hostinger hPanel
-2. Website → Add website → Hostinger Horizons
-3. Describe your site in natural language
+Hostinger has **native GitHub integration** - no GitHub Actions or FTP needed!
 
-### Option B: Node.js Deployment (Full Control)
-
+#### Step 1: Push to GitHub
 ```bash
-# Push to GitHub, automatic deployment via workflow
-git push origin main
+git remote add origin https://github.com/ACSKamloops/shs-engine.git
+git push -u origin master
 ```
 
-The GitHub Actions workflow handles:
-- Building the frontend
-- Deploying to Hostinger via FTP
+#### Step 2: Connect in Hostinger
+1. Log into **Hostinger hPanel**
+2. Go to **Websites → Add website → Node.js Web App**
+3. Select **"Import Git Repository"**
+4. Authorize GitHub access
+5. Select your `shs-engine` repository
+6. Configure build settings:
+   - **Root directory:** `frontend`
+   - **Build command:** `npm run build`
+   - **Output directory:** `dist`
+   - **Node version:** `20.x`
+7. Click **Deploy**
 
-### Required GitHub Secrets
+#### Step 3: Automatic Redeployment
+Once connected, Hostinger automatically redeploys when you push to the linked branch. No additional configuration needed!
 
-Set these in your repository Settings → Secrets:
-
-| Secret | Description |
-|--------|-------------|
-| `FTP_HOST` | Hostinger FTP hostname |
-| `FTP_USERNAME` | FTP username |
-| `FTP_PASSWORD` | FTP password |
+### What Hostinger Handles
+- ✅ SSL certificates
+- ✅ Build execution (`npm run build`)
+- ✅ Framework detection (React/Vite)
+- ✅ Automatic redeployment on git push
+- ✅ Server setup and scaling
 
 ## 📋 Configuration
 
