@@ -1,1 +1,0 @@
-export { FilterPresetsPanel } from './FilterPresetsPanel';

@@ -1,5 +1,5 @@
 /**
- * Hooks exports
+ * SHS Hooks exports
  */
-export { useApi } from './useApi';
-export { useKeyboardNav } from './useKeyboardNav';
+export { useLanguageData } from './useLanguageData';
+export { useProgress } from './useProgress';

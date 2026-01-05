@@ -1,1 +1,0 @@
-export { TourModal } from './TourModal';
