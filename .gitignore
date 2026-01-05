@@ -50,3 +50,33 @@ Trace-*.json
 
 # OCR and processing scripts (may contain paths to sensitive docs)
 scripts/
+
+# ============================================
+# IMAGES & MEDIA FILES (EXCLUDED)
+# Keep large media out of repo
+# ============================================
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.ico
+*.mp4
+*.webm
+*.mov
+*.avi
+*.pdf
+
+# Directories with media
+frontend/public/audit/
+frontend/public/videos/
+frontend/public/images/
+**/images/
+**/videos/
+**/media/
+
+# Allow specific essential assets
+!frontend/public/vite.svg
+!frontend/src/assets/react.svg
+!frontend/src/stories/assets/*.svg
+!frontend/src/stories/assets/*.png
