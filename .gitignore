@@ -38,3 +38,15 @@ Pukaist/
 quality_checks/
 logs/*.log
 
+# ============================================
+# CULTURAL & HISTORICAL DATA (EXCLUDED)
+# Keep sensitive cultural data out of public repo
+# ============================================
+SHS_Materials/
+data/
+projects/
+frontend/src/data/
+Trace-*.json
+
+# OCR and processing scripts (may contain paths to sensitive docs)
+scripts/

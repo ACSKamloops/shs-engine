@@ -1,0 +1,219 @@
+/* DailyChallenge.css - Daily word learning styles */
+
+.daily-challenge {
+    background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--shs-amber-200, #fde68a);
+    position: relative;
+    overflow: hidden;
+}
+
+.challenge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.challenge-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calendar-icon {
+    font-size: 1.5rem;
+}
+
+.challenge-title h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--shs-amber-800, #92400e);
+    margin: 0;
+}
+
+.streak-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    background: white;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid var(--shs-amber-300, #fcd34d);
+}
+
+.streak-emoji {
+    font-size: 1rem;
+}
+
+.streak-count {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--shs-amber-700, #b45309);
+}
+
+/* Word Card */
+.word-card-daily {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+    border: 2px solid var(--shs-amber-200, #fde68a);
+    transition: all 0.3s ease;
+}
+
+.word-card-daily.revealed {
+    border-color: var(--shs-forest-300, #8cc9a8);
+}
+
+.word-text {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--shs-forest-800, #224a38);
+    margin: 0 0 0.25rem;
+}
+
+.pronunciation {
+    font-size: 1rem;
+    color: var(--shs-text-muted, #78716c);
+    font-style: italic;
+    margin: 0 0 1rem;
+}
+
+.reveal-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--shs-amber-500, #f59e0b);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reveal-btn:hover {
+    background: var(--shs-amber-600, #d97706);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Meaning section */
+.word-meaning {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--shs-stone, #e8e2d9);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.meaning-text {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--shs-forest-700, #265c43);
+    margin: 0 0 1rem;
+}
+
+.learned-btn {
+    padding: 0.75rem 1.5rem;
+    background: var(--shs-forest-600, #2d7351);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.learned-btn:hover {
+    background: var(--shs-forest-700, #265c43);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 115, 81, 0.3);
+}
+
+.practiced-message {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--shs-forest-600, #2d7351);
+    margin: 0;
+}
+
+/* Stats */
+.challenge-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--shs-amber-200, #fde68a);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--shs-amber-700, #b45309);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--shs-text-muted, #78716c);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Confetti */
+.confetti-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.confetti-particle {
+    position: absolute;
+    top: -20px;
+    font-size: 1.5rem;
+    animation: confetti-fall 2s ease forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(300px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .word-text {
+        font-size: 1.5rem;
+    }
+
+    .challenge-stats {
+        gap: 1.5rem;
+    }
+}
