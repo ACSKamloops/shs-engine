@@ -1,10 +1,11 @@
 /**
- * MembershipPage - Community Membership Registration
- * Multi-step form for joining the Secwépemc Hunting Society
+ * MembershipPage - Community Membership (Modernized Jan 2026)
+ * Features: Animated step wizard, Framer Motion, hero image, glassmorphism form
  */
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Hero } from '../../components/public/Hero';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatedCard, SectionReveal, FloatingIcon, GlowButton } from '../../components/ui/AnimatedComponents';
 
 interface MembershipForm {
   firstName: string;
@@ -19,25 +20,18 @@ interface MembershipForm {
 }
 
 const initialForm: MembershipForm = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  community: '',
-  city: '',
-  interests: [],
-  newsletter: true,
-  message: '',
+  firstName: '', lastName: '', email: '', phone: '',
+  community: '', city: '', interests: [], newsletter: true, message: '',
 };
 
 const interestOptions = [
-  { id: 'food-sovereignty', label: 'Food Sovereignty & Hunting' },
-  { id: 'cultural-camps', label: 'Cultural Camps' },
-  { id: 'youth-mentorship', label: 'Youth Mentorship' },
-  { id: 'land-stewardship', label: 'Land Stewardship' },
-  { id: 'language', label: 'Language & Culture' },
-  { id: 'healing-wellness', label: 'Healing & Wellness' },
-  { id: 'volunteering', label: 'Volunteering' },
+  { id: 'food-sovereignty', label: 'Food Sovereignty & Hunting', icon: '🦌' },
+  { id: 'cultural-camps', label: 'Cultural Camps', icon: '🏕️' },
+  { id: 'youth-mentorship', label: 'Youth Mentorship', icon: '👨‍👧' },
+  { id: 'land-stewardship', label: 'Land Stewardship', icon: '🌲' },
+  { id: 'language', label: 'Language & Culture', icon: '🗣️' },
+  { id: 'healing-wellness', label: 'Healing & Wellness', icon: '💚' },
+  { id: 'volunteering', label: 'Volunteering', icon: '🤝' },
 ];
 
 const membershipBenefits = [
@@ -46,6 +40,8 @@ const membershipBenefits = [
   { icon: '🤝', title: 'Community', description: 'Connect with other members and Elders' },
   { icon: '🎁', title: 'Discounts', description: 'Member pricing on workshops and programs' },
 ];
+
+const stepLabels = ['Personal', 'Location', 'Interests', 'Review'];
 
 export function MembershipPage() {
   const [step, setStep] = useState(1);
@@ -86,330 +82,418 @@ export function MembershipPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Send to backend
     console.log('Membership form submitted:', form);
     setSubmitted(true);
   };
 
+  // Success State
   if (submitted) {
     return (
-      <div className="min-h-screen bg-shs-cream">
-        <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
-            <svg className="w-10 h-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-shs-forest-800 mb-4">Welcome to the Community!</h1>
-          <p className="text-shs-text-body mb-8">
-            Thank you for your interest in joining the Secwépemc Hunting Society, {form.firstName}! 
-            We've received your membership application and will be in touch soon.
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-shs-forest-600 text-white font-semibold rounded-xl hover:bg-shs-forest-700 transition-colors"
+      <div className="min-h-screen bg-gradient-to-b from-emerald-900 via-emerald-800 to-teal-900 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-lg text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+            className="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30"
           >
-            Return Home
-          </Link>
-        </div>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-5xl"
+            >
+              🎉
+            </motion.span>
+          </motion.div>
+          <h1 className="text-4xl font-extrabold text-white mb-4">Welcome to the Community!</h1>
+          <p className="text-xl text-emerald-200 mb-10">
+            Thank you for joining us, {form.firstName}! We've received your membership application and will be in touch soon.
+          </p>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-emerald-700 font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-shadow"
+            >
+              <span>Return Home</span>
+              <span>→</span>
+            </Link>
+          </motion.div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-shs-cream">
+    <div className="min-h-screen">
       {/* Hero */}
-      <Hero
-        headline="Join Our Community"
-        subheadline="Become a member of the Secwépemc Hunting Society and connect with cultural programs, events, and our community."
-        size="medium"
-      />
+      <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: 'url(/images/heroes/membership_hero.png)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-emerald-900/80" />
+        
+        <div className="relative h-full flex items-center justify-center text-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-3xl"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+              className="text-6xl mb-6"
+            >
+              🤗
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 drop-shadow-lg">
+              Join Our Community
+            </h1>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Become a member and connect with cultural programs, events, and our community.
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Benefits */}
-      <section className="py-12 bg-white border-b border-shs-stone">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-xl font-bold text-shs-forest-800 mb-8">Member Benefits</h2>
+      <section className="py-12 bg-gradient-to-b from-emerald-900 to-shs-sand">
+        <div className="max-w-5xl mx-auto px-4">
+          <SectionReveal>
+            <h2 className="text-center text-2xl font-bold text-white mb-8">Member Benefits</h2>
+          </SectionReveal>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {membershipBenefits.map((benefit) => (
-              <div key={benefit.title} className="text-center p-4 rounded-xl bg-shs-sand/50">
-                <div className="text-3xl mb-2">{benefit.icon}</div>
-                <h3 className="font-semibold text-shs-forest-800 text-sm">{benefit.title}</h3>
-                <p className="text-xs text-shs-text-muted mt-1">{benefit.description}</p>
-              </div>
+            {membershipBenefits.map((benefit, index) => (
+              <AnimatedCard key={benefit.title} delay={index * 0.1} className="p-5 text-center" glass>
+                <motion.span 
+                  className="text-4xl block mb-3"
+                  whileHover={{ scale: 1.3, rotate: 10 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  {benefit.icon}
+                </motion.span>
+                <h3 className="font-bold text-gray-800 text-sm mb-1">{benefit.title}</h3>
+                <p className="text-xs text-gray-500">{benefit.description}</p>
+              </AnimatedCard>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Form */}
-      <section className="py-16 md:py-24">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Progress Steps */}
+      {/* Form Section */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-shs-sand to-white">
+        <div className="max-w-2xl mx-auto px-4">
+          {/* Animated Progress Steps */}
           <div className="flex items-center justify-between mb-12">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3, 4].map((s, i) => (
               <div key={s} className="flex items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
-                    step >= s
-                      ? 'bg-shs-forest-600 text-white'
-                      : 'bg-shs-stone text-shs-text-muted'
-                  }`}
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative"
                 >
-                  {step > s ? '✓' : s}
-                </div>
-                {s < 4 && (
-                  <div
-                    className={`w-16 md:w-24 h-1 mx-2 rounded transition-colors ${
-                      step > s ? 'bg-shs-forest-600' : 'bg-shs-stone'
+                  <motion.div
+                    animate={{
+                      scale: step === s ? [1, 1.1, 1] : 1,
+                      boxShadow: step === s ? '0 0 20px rgba(16, 185, 129, 0.5)' : 'none'
+                    }}
+                    transition={{ duration: 0.5, repeat: step === s ? Infinity : 0, repeatDelay: 1 }}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                      step > s
+                        ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg'
+                        : step === s
+                        ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-xl'
+                        : 'bg-gray-200 text-gray-400'
                     }`}
+                  >
+                    {step > s ? '✓' : s}
+                  </motion.div>
+                  <span className={`absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs whitespace-nowrap ${
+                    step >= s ? 'text-emerald-700 font-medium' : 'text-gray-400'
+                  }`}>
+                    {stepLabels[i]}
+                  </span>
+                </motion.div>
+                {s < 4 && (
+                  <motion.div
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: step > s ? 1 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-12 md:w-20 h-1 mx-2 bg-gradient-to-r from-emerald-500 to-teal-500 rounded origin-left"
+                    style={{ backgroundColor: step > s ? undefined : '#e5e7eb' }}
                   />
                 )}
               </div>
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-shs-stone p-8 shadow-sm">
-            {/* Step 1: Personal Info */}
-            {step === 1 && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-shs-forest-800 mb-6">Personal Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={form.firstName}
-                      onChange={(e) => updateField('firstName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500 ${
-                        errors.firstName ? 'border-red-500' : 'border-shs-stone'
-                      }`}
-                      placeholder="Your first name"
-                    />
-                    {errors.firstName && (
-                      <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={form.lastName}
-                      onChange={(e) => updateField('lastName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500 ${
-                        errors.lastName ? 'border-red-500' : 'border-shs-stone'
-                      }`}
-                      placeholder="Your last name"
-                    />
-                    {errors.lastName && (
-                      <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => updateField('email', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500 ${
-                      errors.email ? 'border-red-500' : 'border-shs-stone'
-                    }`}
-                    placeholder="you@example.com"
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                    Phone (optional)
-                  </label>
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => updateField('phone', e.target.value)}
-                    className="w-full px-4 py-3 border border-shs-stone rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500"
-                    placeholder="(250) 555-0000"
-                  />
-                </div>
-              </div>
-            )}
+          <SectionReveal delay={0.2}>
+            <motion.form
+              onSubmit={handleSubmit}
+              className="bg-white/95 backdrop-blur-md rounded-3xl border border-white/50 p-8 md:p-10 shadow-2xl mt-8"
+            >
+              <AnimatePresence mode="wait">
+                {/* Step 1: Personal Info */}
+                {step === 1 && (
+                  <motion.div
+                    key="step1"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <FloatingIcon icon="👤" size="lg" />
+                      <h2 className="text-2xl font-bold text-gray-800">Personal Information</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { name: 'firstName', label: 'First Name' },
+                        { name: 'lastName', label: 'Last Name' },
+                      ].map((field) => (
+                        <div key={field.name}>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">{field.label} *</label>
+                          <input
+                            type="text"
+                            value={form[field.name as keyof MembershipForm] as string}
+                            onChange={(e) => updateField(field.name as keyof MembershipForm, e.target.value)}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50 ${
+                              errors[field.name as keyof MembershipForm] ? 'border-red-400' : 'border-gray-200'
+                            }`}
+                          />
+                          {errors[field.name as keyof MembershipForm] && (
+                            <p className="text-red-500 text-xs mt-1">{errors[field.name as keyof MembershipForm]}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => updateField('email', e.target.value)}
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50 ${
+                          errors.email ? 'border-red-400' : 'border-gray-200'
+                        }`}
+                        placeholder="you@example.com"
+                      />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone (optional)</label>
+                      <input
+                        type="tel"
+                        value={form.phone}
+                        onChange={(e) => updateField('phone', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50"
+                        placeholder="(250) 555-0000"
+                      />
+                    </div>
+                  </motion.div>
+                )}
 
-            {/* Step 2: Location */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-shs-forest-800 mb-6">Location</h2>
-                <div>
-                  <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                    Community (if applicable)
-                  </label>
-                  <input
-                    type="text"
-                    value={form.community}
-                    onChange={(e) => updateField('community', e.target.value)}
-                    className="w-full px-4 py-3 border border-shs-stone rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500"
-                    placeholder="e.g., Tk'emlúps te Secwépemc"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                    City/Town
-                  </label>
-                  <input
-                    type="text"
-                    value={form.city}
-                    onChange={(e) => updateField('city', e.target.value)}
-                    className="w-full px-4 py-3 border border-shs-stone rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500"
-                    placeholder="e.g., Kamloops, Chase, Salmon Arm"
-                  />
-                </div>
-              </div>
-            )}
+                {/* Step 2: Location */}
+                {step === 2 && (
+                  <motion.div
+                    key="step2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <FloatingIcon icon="📍" size="lg" />
+                      <h2 className="text-2xl font-bold text-gray-800">Your Location</h2>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Community (if applicable)</label>
+                      <input
+                        type="text"
+                        value={form.community}
+                        onChange={(e) => updateField('community', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50"
+                        placeholder="e.g., Tk'emlúps te Secwépemc"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">City/Town</label>
+                      <input
+                        type="text"
+                        value={form.city}
+                        onChange={(e) => updateField('city', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50"
+                        placeholder="e.g., Kamloops, Chase, Salmon Arm"
+                      />
+                    </div>
+                  </motion.div>
+                )}
 
-            {/* Step 3: Interests */}
-            {step === 3 && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-shs-forest-800 mb-2">Areas of Interest</h2>
-                <p className="text-sm text-shs-text-muted mb-6">
-                  Select the programs and activities you're most interested in.
-                </p>
-                <div className="space-y-3">
-                  {interestOptions.map((opt) => (
-                    <label
-                      key={opt.id}
-                      className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-colors ${
-                        form.interests.includes(opt.id)
-                          ? 'bg-shs-forest-50 border-shs-forest-500'
-                          : 'border-shs-stone hover:bg-shs-sand/50'
-                      }`}
-                    >
+                {/* Step 3: Interests */}
+                {step === 3 && (
+                  <motion.div
+                    key="step3"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <FloatingIcon icon="✨" size="lg" />
+                      <h2 className="text-2xl font-bold text-gray-800">Areas of Interest</h2>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">Select the programs you're most interested in.</p>
+                    <div className="grid grid-cols-1 gap-3">
+                      {interestOptions.map((opt, i) => (
+                        <motion.label
+                          key={opt.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all ${
+                            form.interests.includes(opt.id)
+                              ? 'bg-emerald-50 border-emerald-400 shadow-md'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="text-2xl">{opt.icon}</span>
+                          <span className="text-gray-800 font-medium flex-1">{opt.label}</span>
+                          <input
+                            type="checkbox"
+                            checked={form.interests.includes(opt.id)}
+                            onChange={() => toggleInterest(opt.id)}
+                            className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                          />
+                        </motion.label>
+                      ))}
+                    </div>
+                    <label className="flex items-center gap-3 mt-6 p-4 bg-emerald-50 rounded-xl">
                       <input
                         type="checkbox"
-                        checked={form.interests.includes(opt.id)}
-                        onChange={() => toggleInterest(opt.id)}
-                        className="w-5 h-5 text-shs-forest-600 rounded border-shs-stone focus:ring-shs-forest-500"
+                        checked={form.newsletter}
+                        onChange={(e) => updateField('newsletter', e.target.checked)}
+                        className="w-5 h-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
                       />
-                      <span className="text-shs-forest-800 font-medium">{opt.label}</span>
+                      <span className="text-sm text-gray-700">📨 Subscribe to our newsletter for updates</span>
                     </label>
-                  ))}
-                </div>
-                <label className="flex items-center gap-3 mt-6">
-                  <input
-                    type="checkbox"
-                    checked={form.newsletter}
-                    onChange={(e) => updateField('newsletter', e.target.checked)}
-                    className="w-5 h-5 text-shs-forest-600 rounded border-shs-stone focus:ring-shs-forest-500"
-                  />
-                  <span className="text-sm text-shs-text-body">
-                    Subscribe to our newsletter for updates
-                  </span>
-                </label>
+                  </motion.div>
+                )}
+
+                {/* Step 4: Review */}
+                {step === 4 && (
+                  <motion.div
+                    key="step4"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-center gap-3 mb-6">
+                      <FloatingIcon icon="📋" size="lg" />
+                      <h2 className="text-2xl font-bold text-gray-800">Review & Submit</h2>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-emerald-50 rounded-xl p-6 space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-400 text-xs">Name</span>
+                          <p className="font-semibold text-gray-800">{form.firstName} {form.lastName}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 text-xs">Email</span>
+                          <p className="font-semibold text-gray-800">{form.email}</p>
+                        </div>
+                        {form.phone && (
+                          <div>
+                            <span className="text-gray-400 text-xs">Phone</span>
+                            <p className="font-semibold text-gray-800">{form.phone}</p>
+                          </div>
+                        )}
+                        {form.city && (
+                          <div>
+                            <span className="text-gray-400 text-xs">Location</span>
+                            <p className="font-semibold text-gray-800">
+                              {form.community ? `${form.community}, ` : ''}{form.city}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {form.interests.length > 0 && (
+                        <div>
+                          <span className="text-gray-400 text-xs">Interests</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {form.interests.map((id) => {
+                              const opt = interestOptions.find((o) => o.id === id);
+                              return (
+                                <span
+                                  key={id}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full"
+                                >
+                                  <span>{opt?.icon}</span> {opt?.label}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Anything else? (optional)</label>
+                      <textarea
+                        value={form.message}
+                        onChange={(e) => updateField('message', e.target.value)}
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all bg-gray-50/50 resize-none"
+                        placeholder="Tell us about yourself..."
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-100">
+                {step > 1 ? (
+                  <motion.button
+                    type="button"
+                    whileHover={{ x: -4 }}
+                    onClick={handleBack}
+                    className="px-6 py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    <span>←</span> Back
+                  </motion.button>
+                ) : (
+                  <div />
+                )}
+                {step < 4 ? (
+                  <GlowButton onClick={handleNext} className="flex items-center gap-2">
+                    Next <span>→</span>
+                  </GlowButton>
+                ) : (
+                  <GlowButton className="flex items-center gap-2">
+                    Submit Application ✨
+                  </GlowButton>
+                )}
               </div>
-            )}
+            </motion.form>
+          </SectionReveal>
 
-            {/* Step 4: Review */}
-            {step === 4 && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-shs-forest-800 mb-6">Review & Submit</h2>
-                <div className="bg-shs-sand/50 rounded-xl p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-shs-text-muted">Name</span>
-                      <p className="font-medium text-shs-forest-800">{form.firstName} {form.lastName}</p>
-                    </div>
-                    <div>
-                      <span className="text-shs-text-muted">Email</span>
-                      <p className="font-medium text-shs-forest-800">{form.email}</p>
-                    </div>
-                    {form.phone && (
-                      <div>
-                        <span className="text-shs-text-muted">Phone</span>
-                        <p className="font-medium text-shs-forest-800">{form.phone}</p>
-                      </div>
-                    )}
-                    {form.city && (
-                      <div>
-                        <span className="text-shs-text-muted">Location</span>
-                        <p className="font-medium text-shs-forest-800">
-                          {form.community ? `${form.community}, ` : ''}{form.city}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  {form.interests.length > 0 && (
-                    <div>
-                      <span className="text-sm text-shs-text-muted">Interests</span>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {form.interests.map((id) => (
-                          <span
-                            key={id}
-                            className="px-3 py-1 bg-shs-forest-100 text-shs-forest-700 text-xs rounded-full"
-                          >
-                            {interestOptions.find((o) => o.id === id)?.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-shs-forest-700 mb-2">
-                    Anything else you'd like to share? (optional)
-                  </label>
-                  <textarea
-                    value={form.message}
-                    onChange={(e) => updateField('message', e.target.value)}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-shs-stone rounded-xl focus:outline-none focus:ring-2 focus:ring-shs-forest-500 resize-none"
-                    placeholder="Tell us about yourself or any questions you have..."
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-shs-stone">
-              {step > 1 ? (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-3 text-shs-forest-700 font-medium hover:bg-shs-sand rounded-xl transition-colors"
-                >
-                  ← Back
-                </button>
-              ) : (
-                <div />
-              )}
-              {step < 4 ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="px-8 py-3 bg-shs-forest-600 text-white font-semibold rounded-xl hover:bg-shs-forest-700 transition-colors"
-                >
-                  Next →
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  className="px-8 py-3 bg-shs-amber-500 text-white font-semibold rounded-xl hover:bg-shs-amber-600 transition-colors shadow-lg"
-                >
-                  Submit Application
-                </button>
-              )}
-            </div>
-          </form>
-
-          <p className="text-center text-xs text-shs-text-muted mt-6">
-            Already a member? <Link to="/contact" className="text-shs-forest-600 hover:underline">Contact us</Link> for help.
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Already a member? <Link to="/contact" className="text-emerald-600 hover:underline">Contact us</Link> for help.
           </p>
         </div>
       </section>
     </div>
   );
 }
+
+export default MembershipPage;

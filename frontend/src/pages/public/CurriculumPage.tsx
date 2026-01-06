@@ -1,16 +1,19 @@
 /**
- * CurriculumPage - SHS Cultural Camp Curriculum (Redesigned Jan 2026)
+ * CurriculumPage - Premium Module Experience (Redesigned Jan 2026)
  * 
- * CLEAN SINGLE-VIEW LAYOUT:
- * - Direct content display without redundant sections
- * - Left sidebar for module/unit navigation
- * - Right content area for lessons and details
- * - No duplicate module switchers
+ * UX FEATURES:
+ * - Immersive hero header with module theme
+ * - Syllabus timeline view (vertical)
+ * - Expandable unit cards with smooth animation
+ * - Tabbed lesson content (Content | Vocabulary | Elder Wisdom)
+ * - Progress tracking and completion celebrations
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LessonContentRenderer, PracticeQuiz } from '../../components/curriculum';
 
-// Import curriculum data
+// Curriculum data imports
 import foodSovereignty from '../../data/curriculum/food_sovereignty_curriculum.json';
 import landStewardship from '../../data/curriculum/land_stewardship_curriculum.json';
 import culturalPreservation from '../../data/curriculum/cultural_preservation_curriculum.json';
@@ -18,449 +21,535 @@ import healingWellness from '../../data/curriculum/healing_wellness_curriculum.j
 import youthMentorship from '../../data/curriculum/youth_mentorship_curriculum.json';
 import legalTraditions from '../../data/curriculum/legal_traditions_curriculum.json';
 
-// Module data with color schemes and Cḱuĺtn pathway mapping
-const modules = [
-  { data: foodSovereignty, colorScheme: 'forest' as const, icon: '🍖', pathway: 'land' },
-  { data: landStewardship, colorScheme: 'earth' as const, icon: '🌲', pathway: 'land' },
-  { data: culturalPreservation, colorScheme: 'amber' as const, icon: '🎭', pathway: 'mind' },
-  { data: healingWellness, colorScheme: 'forest' as const, icon: '💚', pathway: 'heart' },
-  { data: youthMentorship, colorScheme: 'amber' as const, icon: '👨‍👩‍👧', pathway: 'mind' },
-  { data: legalTraditions, colorScheme: 'earth' as const, icon: '⚖️', pathway: 'spirit' },
-];
+// Gold standard reading imports
+import foodsBook from '../../data/gold_standard/foods_cultural_series.json';
+import gamesBook from '../../data/gold_standard/games_cultural_series.json';
+import homesBook from '../../data/gold_standard/homes_cultural_series.json';
+import clothingBook from '../../data/gold_standard/clothing_cultural_series.json';
+import technologyBook from '../../data/gold_standard/technology_cultural_series.json';
+import songsDancesBook from '../../data/gold_standard/songs_dances_cultural_series.json';
+import thingsWeDoBook from '../../data/gold_standard/things_we_do_cultural.json';
 
-// Pathway metadata
-const pathwayInfo: Record<string, { name: string; element: string; color: string }> = {
-  land: { name: 'Land', element: 'tmícw', color: 'emerald' },
-  mind: { name: 'Mind', element: 'sképqin', color: 'sky' },
-  heart: { name: 'Heart', element: 'púsmen', color: 'amber' },
-  spirit: { name: 'Spirit', element: 'súmec', color: 'violet' },
+// Configs
+import pathwayConfig from '../../data/config/pathways.json';
+import unitReadingMap from '../../data/config/unit_reading_map.json';
+
+// Helper to get module metadata
+const getModuleMeta = (data: any) => ({
+  moduleId: data.moduleId || data.metadata?.moduleId,
+  title: data.title || data.metadata?.title,
+  subtitle: data.subtitle || data.metadata?.subtitle,
+  program: data.program || data.metadata?.program,
+  description: data.description || data.metadata?.description,
+});
+
+// Book sources for supplemental reading
+const bookSources: Record<string, any> = {
+  foods: foodsBook, games: gamesBook, homes: homesBook,
+  clothing: clothingBook, technology: technologyBook,
+  songsDances: songsDancesBook, thingsWeDo: thingsWeDoBook,
 };
+
+// Build unit chapter map
+const unitChapterMap: Record<string, any[]> = {};
+for (const [unitId, readings] of Object.entries(unitReadingMap as Record<string, any[]>)) {
+  unitChapterMap[unitId] = readings.map(r => ({
+    ...r, source: bookSources[r.sourceKey] || null,
+  }));
+}
+
+// Curriculum registry
+const curriculumData: Record<string, any> = {
+  food_sovereignty: foodSovereignty,
+  land_stewardship: landStewardship,
+  cultural_preservation: culturalPreservation,
+  healing_wellness: healingWellness,
+  youth_mentorship: youthMentorship,
+  legal_traditions: legalTraditions,
+};
+
+// Module themes
+const moduleThemes: Record<string, { gradient: string; icon: string }> = {
+  food_sovereignty: { gradient: 'from-amber-600 via-orange-600 to-red-600', icon: '🍖' },
+  land_stewardship: { gradient: 'from-emerald-600 via-teal-600 to-cyan-600', icon: '🌲' },
+  cultural_preservation: { gradient: 'from-sky-600 via-blue-600 to-indigo-600', icon: '🎭' },
+  healing_wellness: { gradient: 'from-rose-500 via-pink-500 to-fuchsia-500', icon: '💚' },
+  youth_mentorship: { gradient: 'from-indigo-500 via-purple-500 to-pink-500', icon: '👨‍👩‍👧' },
+  legal_traditions: { gradient: 'from-violet-600 via-purple-600 to-indigo-600', icon: '⚖️' },
+};
+
+const pathwayInfo = pathwayConfig as Record<string, { name: string; element: string; color: string }>;
 
 export function CurriculumPage() {
   const { pathwayId, moduleId } = useParams<{ pathwayId?: string; moduleId?: string }>();
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null);
+  const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'content' | 'vocabulary' | 'elder' | 'practice' | 'reading' | 'plants'>('content');
+  const [userMode, setUserMode] = useState<'explore' | 'learn'>('explore'); // Default to explore
 
-  // Filter modules by pathway
-  const filteredModules = useMemo(() => {
-    if (!pathwayId || pathwayId === 'modules') return modules;
-    return modules.filter(m => m.pathway === pathwayId);
-  }, [pathwayId]);
-
-  // Find current module by ID or default to first
+  // Get current module
   const currentModule = useMemo(() => {
-    if (moduleId) {
-      return filteredModules.find(m => m.data.metadata.moduleId === moduleId) || filteredModules[0];
-    }
-    return filteredModules[0];
-  }, [moduleId, filteredModules]);
+    if (!moduleId) return null;
+    return curriculumData[moduleId];
+  }, [moduleId]);
 
-  // Get current pathway info
-  const currentPathway = pathwayId && pathwayInfo[pathwayId] ? pathwayInfo[pathwayId] : null;
+  const moduleMeta = currentModule ? getModuleMeta(currentModule) : null;
+  const theme = moduleId ? moduleThemes[moduleId] || moduleThemes.food_sovereignty : moduleThemes.food_sovereignty;
+  const pathway = pathwayId && pathwayInfo[pathwayId] ? pathwayInfo[pathwayId] : null;
 
-  // Auto-expand first unit on load
+  // Calculate stats
+  const stats = useMemo(() => {
+    if (!currentModule) return { units: 0, lessons: 0, completed: 0 };
+    const units = currentModule.units?.length || 0;
+    const lessons = currentModule.units?.reduce((a: number, u: any) => a + (u.lessons?.length || 0), 0) || 0;
+    const completed = completedLessons.length;
+    return { units, lessons, completed };
+  }, [currentModule, completedLessons]);
+
+  // Auto-expand first unit
   useEffect(() => {
-    if (currentModule?.data.units?.length > 0 && !expandedUnit) {
-      setExpandedUnit(currentModule.data.units[0].unitId);
+    if (currentModule?.units?.[0] && !expandedUnit) {
+      setExpandedUnit(currentModule.units[0].unitId);
     }
   }, [currentModule, expandedUnit]);
 
-  if (!currentModule) {
+  if (!currentModule || !moduleMeta) {
     return (
-      <div className="min-h-screen bg-shs-cream flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-shs-forest-800 mb-2">Module Not Found</h2>
-          <Link to="/curriculum" className="text-shs-forest-600 underline">Return to Curriculum Hub</Link>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center bg-white rounded-2xl p-8 shadow-lg max-w-md"
+        >
+          <span className="text-6xl mb-4 block">📚</span>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Module Not Found</h2>
+          <p className="text-gray-600 mb-6">The curriculum module you're looking for doesn't exist.</p>
+          <Link
+            to="/curriculum"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-shs-forest-600 text-white font-semibold rounded-xl hover:bg-shs-forest-700 transition-colors"
+          >
+            ← Back to Curriculum
+          </Link>
+        </motion.div>
       </div>
     );
   }
 
-  const colorMap: Record<string, { bg: string; text: string; border: string; light: string }> = {
-    emerald: { bg: 'bg-emerald-600', text: 'text-emerald-600', border: 'border-emerald-300', light: 'bg-emerald-50' },
-    sky: { bg: 'bg-sky-600', text: 'text-sky-600', border: 'border-sky-300', light: 'bg-sky-50' },
-    amber: { bg: 'bg-amber-600', text: 'text-amber-600', border: 'border-amber-300', light: 'bg-amber-50' },
-    violet: { bg: 'bg-violet-600', text: 'text-violet-600', border: 'border-violet-300', light: 'bg-violet-50' },
-  };
-  const colors = currentPathway ? colorMap[currentPathway.color] : colorMap.emerald;
-
   return (
-    <div className="min-h-screen bg-shs-cream">
-      {/* Compact Header with Breadcrumb */}
-      <header className={`${colors.bg} text-white py-6`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* IMMERSIVE HERO */}
+      <section className={`relative bg-gradient-to-br ${theme.gradient} overflow-hidden`}>
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-white rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-6 py-12 lg:py-16">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm opacity-80 mb-3">
-            <Link to="/curriculum" className="hover:underline">Curriculum</Link>
+          <motion.nav
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-sm text-white/70 mb-8"
+          >
+            <Link to="/curriculum" className="hover:text-white transition-colors">Curriculum</Link>
             <span>/</span>
-            {currentPathway && (
+            {pathway && (
               <>
-                <Link to={`/curriculum/${pathwayId}`} className="hover:underline capitalize">
-                  {currentPathway.element} — {currentPathway.name}
+                <Link to={`/curriculum/${pathwayId}`} className="hover:text-white transition-colors">
+                  {pathway.element}
                 </Link>
                 <span>/</span>
               </>
             )}
-            <span className="font-medium">{currentModule.data.metadata.title}</span>
-          </nav>
-          
-          {/* Module Header */}
-          <div className="flex items-center gap-4">
-            <span className="text-4xl">{currentModule.icon}</span>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">{currentModule.data.metadata.title}</h1>
-              <p className="text-sm opacity-80">
-                {currentModule.data.units.length} units • {currentModule.data.metadata.program}
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+            <span className="text-white font-medium">{moduleMeta.title}</span>
+          </motion.nav>
 
-      {/* Main Content: Two-Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* LEFT SIDEBAR: Module & Unit Navigation */}
-          <aside className="lg:w-72 flex-shrink-0">
-            {/* Module Switcher (if multiple modules in pathway) */}
-            {filteredModules.length > 1 && (
-              <div className="mb-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Modules
-                </h3>
-                <div className="space-y-1">
-                  {filteredModules.map((mod) => (
-                    <Link
-                      key={mod.data.metadata.moduleId}
-                      to={`/curriculum/${pathwayId || mod.pathway}/${mod.data.metadata.moduleId}`}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                        mod.data.metadata.moduleId === currentModule.data.metadata.moduleId
-                          ? `${colors.light} ${colors.text} font-semibold`
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <span className="text-xl">{mod.icon}</span>
-                      <span className="text-sm">{mod.data.metadata.title}</span>
-                    </Link>
-                  ))}
+          <div className="flex flex-col lg:flex-row lg:items-center gap-8">
+            {/* Module Info */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex-1"
+            >
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.1 }}
+                className="text-7xl block mb-6"
+              >
+                {theme.icon}
+              </motion.span>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">
+                {moduleMeta.title}
+              </h1>
+              <p className="text-xl text-white/80 mb-6 max-w-lg">
+                {moduleMeta.description || moduleMeta.subtitle || 'Explore traditional knowledge and cultural teachings.'}
+              </p>
+
+              <div className="flex flex-wrap gap-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-3">
+                  <span className="text-2xl">📦</span>
+                  <div>
+                    <p className="text-white font-bold">{stats.units}</p>
+                    <p className="text-white/70 text-sm">Units</p>
+                  </div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-3">
+                  <span className="text-2xl">📖</span>
+                  <div>
+                    <p className="text-white font-bold">{stats.lessons}</p>
+                    <p className="text-white/70 text-sm">Lessons</p>
+                  </div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-3">
+                  <span className="text-2xl">✓</span>
+                  <div>
+                    <p className="text-white font-bold">{stats.completed}</p>
+                    <p className="text-white/70 text-sm">Completed</p>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Unit Navigation */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                Units
-              </h3>
-              <nav className="space-y-1">
-                {currentModule.data.units.map((unit: any, idx: number) => (
+              {/* Explore/Learn Mode Toggle */}
+              <div className="mt-6 flex items-center gap-3">
+                <span className="text-white/70 text-sm">Mode:</span>
+                <div className="inline-flex bg-white/10 backdrop-blur-sm rounded-xl p-1">
                   <button
-                    key={unit.unitId}
-                    onClick={() => setExpandedUnit(unit.unitId)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                      expandedUnit === unit.unitId
-                        ? `${colors.light} ${colors.text} font-semibold border-l-4 ${colors.border}`
-                        : 'hover:bg-gray-50 text-gray-700'
+                    onClick={() => setUserMode('explore')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      userMode === 'explore'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-white/80 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {idx + 1}
-                      </span>
-                      <span className="line-clamp-2">{unit.title}</span>
-                    </div>
+                    🔍 Explore
                   </button>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          {/* RIGHT CONTENT: Selected Unit Details */}
-          <main className="flex-1 min-w-0">
-            {currentModule.data.units
-              .filter((unit: any) => expandedUnit === unit.unitId)
-              .map((unit: any) => (
-                <div key={unit.unitId} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                  {/* Unit Header */}
-                  <div className={`${colors.light} px-6 py-5 border-b ${colors.border}`}>
-                    <h2 className="text-xl font-bold text-gray-900">{unit.title}</h2>
-                    {unit.description && (
-                      <p className="text-sm text-gray-600 mt-1">{unit.description}</p>
-                    )}
-                    <div className="flex flex-wrap gap-3 mt-3 text-xs text-gray-500">
-                      {unit.duration && <span>⏱ {unit.duration}</span>}
-                      {unit.season && <span>🌿 {unit.season}</span>}
-                      <span>📚 {unit.lessons?.length || 0} lessons</span>
-                    </div>
-                  </div>
-
-                  {/* Unit Vocabulary (if exists) */}
-                  {unit.vocabulary && unit.vocabulary.length > 0 && (
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                        📖 Vocabulary ({unit.vocabulary.length} words)
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {unit.vocabulary.slice(0, 8).map((word: any, i: number) => (
-                          <span
-                            key={i}
-                            className="px-3 py-1 bg-white border border-gray-200 rounded-full text-sm"
-                            title={word.english}
-                          >
-                            <span className="font-medium text-gray-800">{word.secwepemc}</span>
-                            <span className="text-gray-400 ml-1">— {word.english}</span>
-                          </span>
-                        ))}
-                        {unit.vocabulary.length > 8 && (
-                          <span className="px-3 py-1 text-gray-500 text-sm">
-                            +{unit.vocabulary.length - 8} more
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Lessons List */}
-                  <div className="divide-y divide-gray-100">
-                    {unit.lessons?.map((lesson: any, lessonIdx: number) => (
-                      <LessonAccordion
-                        key={lesson.lessonId || lessonIdx}
-                        lesson={lesson}
-                        index={lessonIdx}
-                        colors={colors}
-                      />
-                    ))}
-                    {(!unit.lessons || unit.lessons.length === 0) && (
-                      <div className="px-6 py-8 text-center text-gray-500">
-                        <p>No lessons available for this unit yet.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Unit Protocols (if exists) */}
-                  {unit.protocols && unit.protocols.length > 0 && (
-                    <div className="px-6 py-4 bg-amber-50 border-t border-amber-200">
-                      <h4 className="text-sm font-semibold text-amber-800 mb-2">🪶 Protocols</h4>
-                      <ul className="space-y-1">
-                        {unit.protocols.map((protocol: string, i: number) => (
-                          <li key={i} className="text-sm text-amber-700 flex items-start gap-2">
-                            <span className="text-amber-400 mt-0.5">•</span>
-                            {protocol}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => setUserMode('learn')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      userMode === 'learn'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-white/80 hover:text-white'
+                    }`}
+                  >
+                    📚 Track Progress
+                  </button>
                 </div>
-              ))}
-
-            {/* Prompt to select a unit if none selected */}
-            {!expandedUnit && (
-              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                <p className="text-gray-500">← Select a unit from the sidebar to view its content</p>
               </div>
-            )}
-          </main>
+            </motion.div>
+
+            {/* Progress Circle */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex-shrink-0"
+            >
+              <div className="relative w-48 h-48">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="8" />
+                  <motion.circle
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    initial={{ strokeDasharray: '0 283' }}
+                    animate={{ strokeDasharray: `${(stats.completed / Math.max(stats.lessons, 1)) * 283} 283` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                  <span className="text-4xl font-bold">
+                    {stats.lessons > 0 ? Math.round((stats.completed / stats.lessons) * 100) : 0}%
+                  </span>
+                  <span className="text-sm text-white/70">Complete</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      </section>
 
-/**
- * LessonAccordion - Expandable lesson with content
- */
-function LessonAccordion({ 
-  lesson, 
-  index, 
-  colors 
-}: { 
-  lesson: any; 
-  index: number; 
-  colors: { bg: string; text: string; border: string; light: string };
-}) {
-  const [isExpanded, setIsExpanded] = useState(false);
+      {/* SYLLABUS TIMELINE */}
+      <section className="max-w-4xl mx-auto px-6 py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Syllabus</h2>
 
-  return (
-    <div className="border-b border-gray-100 last:border-0">
-      {/* Lesson Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50 transition-colors"
-      >
-        <span className={`w-8 h-8 rounded-full ${isExpanded ? colors.bg + ' text-white' : 'bg-gray-100 text-gray-600'} flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors`}>
-          {index + 1}
-        </span>
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900">{lesson.title}</h4>
-          {lesson.source && (
-            <p className="text-xs text-gray-400 truncate">{lesson.source}</p>
-          )}
-        </div>
-        <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+        <div className="relative">
+          {/* Timeline line */}
+          <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-gray-200" />
 
-      {/* Lesson Content (expanded) */}
-      {isExpanded && (
-        <div className="px-6 pb-6 pt-2 space-y-4 bg-gray-50">
-          {/* Context / Key Teaching */}
-          {lesson.context && (
-            <p className="text-sm text-gray-700">{lesson.context}</p>
-          )}
-          {lesson.keyTeaching && (
-            <div className="p-4 bg-violet-50 border-l-4 border-violet-400 rounded-r-lg">
-              <h5 className="text-sm font-semibold text-violet-700 mb-1">Key Teaching</h5>
-              <p className="text-sm text-gray-700">{lesson.keyTeaching}</p>
-            </div>
-          )}
-          {lesson.teaching && typeof lesson.teaching === 'string' && (
-            <div className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
-              <p className="text-sm text-gray-700 italic">"{lesson.teaching}"</p>
-              {lesson.elder && <p className="text-xs text-amber-700 mt-2">— {lesson.elder}</p>}
-            </div>
-          )}
+          {/* Units */}
+          <div className="space-y-6">
+            {currentModule.units?.map((unit: any, unitIndex: number) => {
+              const isExpanded = expandedUnit === unit.unitId;
+              const unitLessons = unit.lessons || [];
+              const unitCompleted = unitLessons.filter((l: any) => completedLessons.includes(l.lessonId)).length;
+              const unitProgress = unitLessons.length > 0 ? Math.round((unitCompleted / unitLessons.length) * 100) : 0;
 
-          {/* Content array */}
-          {lesson.content && Array.isArray(lesson.content) && lesson.content.length > 0 && (
-            <div className="space-y-2">
-              {lesson.content.map((item: any, i: number) => (
-                <div key={i} className="p-3 bg-white rounded-lg border border-gray-200">
-                  {item.method && <p className="font-semibold text-gray-800">{item.method}</p>}
-                  {item.animal && <p className="font-semibold text-gray-800">{item.animal}</p>}
-                  {item.secwepemc && <p className="font-semibold text-emerald-700">{item.secwepemc}</p>}
-                  {(item.description || item.english) && (
-                    <p className="text-sm text-gray-600 mt-1">{item.description || item.english}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+              return (
+                <motion.div
+                  key={unit.unitId}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: unitIndex * 0.1 }}
+                  className="relative"
+                >
+                  {/* Timeline node */}
+                  <div className={`absolute left-4 w-5 h-5 rounded-full border-4 ${
+                    unitProgress === 100 ? 'bg-green-500 border-green-200' :
+                    unitProgress > 0 ? 'bg-amber-500 border-amber-200' :
+                    'bg-gray-300 border-gray-100'
+                  }`} />
 
-          {/* Discussion Questions */}
-          {lesson.discussionQuestions && lesson.discussionQuestions.length > 0 && (
-            <div className="p-4 bg-sky-50 rounded-lg">
-              <h5 className="text-sm font-semibold text-sky-700 mb-2">Discussion Questions</h5>
-              <ul className="space-y-1">
-                {lesson.discussionQuestions.map((q: string, i: number) => (
-                  <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                    <span className="text-sky-400">•</span> {q}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Details object (coming of age, etc) */}
-          {lesson.details && typeof lesson.details === 'object' && (
-            <div className="p-4 bg-rose-50 rounded-lg space-y-2">
-              {lesson.details.duration && (
-                <p className="text-sm"><strong>Duration:</strong> {lesson.details.duration}</p>
-              )}
-              {lesson.details.skills && (
-                <div>
-                  <p className="text-sm font-semibold text-rose-700">Skills:</p>
-                  <ul className="list-disc list-inside text-sm text-gray-700">
-                    {lesson.details.skills.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                  </ul>
-                </div>
-              )}
-              {lesson.details.attire && (
-                <div>
-                  <p className="text-sm font-semibold text-rose-700">Attire:</p>
-                  <ul className="list-disc list-inside text-sm text-gray-700">
-                    {lesson.details.attire.map((a: string, i: number) => <li key={i}>{a}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Phrases */}
-          {lesson.phrases && lesson.phrases.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {lesson.phrases.map((p: any, i: number) => (
-                <div key={i} className="p-3 bg-white rounded-lg border border-gray-200">
-                  <p className="font-semibold text-emerald-700">{p.secwepemc}</p>
-                  <p className="text-sm text-gray-600">{p.english}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Pattern */}
-          {lesson.pattern && lesson.pattern.length > 0 && (
-            <div className="space-y-2">
-              {lesson.pattern.map((p: any, i: number) => (
-                <div key={i} className="p-3 bg-violet-50 border-l-4 border-violet-300 rounded-r-lg">
-                  <p className="font-semibold text-violet-800">{p.secwepemc}</p>
-                  <p className="text-sm text-gray-600">{p.english}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Numbers */}
-          {lesson.numbers && lesson.numbers.length > 0 && (
-            <div className="grid grid-cols-5 gap-2">
-              {lesson.numbers.map((n: any, i: number) => (
-                <div key={i} className="p-2 bg-sky-50 rounded-lg text-center border border-sky-200">
-                  <p className="text-lg font-bold text-sky-800">{n.number}</p>
-                  <p className="text-xs text-sky-600">{n.secwepemc}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Commands */}
-          {lesson.commands && lesson.commands.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {lesson.commands.map((cmd: any, i: number) => (
-                <div key={i} className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <p className="font-semibold text-emerald-800">{cmd.secwepemc}</p>
-                  <p className="text-sm text-gray-600">{cmd.english}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Games */}
-          {lesson.games && typeof lesson.games === 'object' && (
-            <div className="space-y-3">
-              {['easy', 'medium', 'advanced'].map((difficulty) => {
-                const games = (lesson.games as any)[difficulty];
-                if (!games) return null;
-                const diffColors: Record<string, string> = {
-                  easy: 'bg-green-50 border-green-200 text-green-800',
-                  medium: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-                  advanced: 'bg-red-50 border-red-200 text-red-800',
-                };
-                return (
-                  <div key={difficulty}>
-                    <h6 className="text-xs font-semibold uppercase text-gray-500 mb-2">
-                      {difficulty} Games
-                    </h6>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {games.map((g: any, i: number) => (
-                        <div key={i} className={`p-2 rounded-lg border ${diffColors[difficulty]}`}>
-                          <p className="font-medium text-sm">{g.name}</p>
-                          <p className="text-xs opacity-70">Players: {g.players}</p>
+                  {/* Unit Card */}
+                  <div className="ml-14">
+                    <motion.button
+                      onClick={() => setExpandedUnit(isExpanded ? null : unit.unitId)}
+                      className={`w-full text-left p-6 rounded-2xl transition-all ${
+                        isExpanded
+                          ? 'bg-white shadow-xl ring-2 ring-shs-forest-200'
+                          : 'bg-white/80 hover:bg-white hover:shadow-lg'
+                      }`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                              Unit {unitIndex + 1}
+                            </span>
+                            {unitProgress === 100 && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">
+                                ✓ Complete
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">{unit.title}</h3>
+                          {unit.description && (
+                            <p className="text-gray-600 text-sm line-clamp-2">{unit.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                            <span>{unitLessons.length} lessons</span>
+                            <span>{unitCompleted}/{unitLessons.length} completed</span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
+
+                        <div className="flex items-center gap-4">
+                          {/* Mini progress */}
+                          <div className="hidden sm:block w-24">
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${unitProgress}%` }}
+                                className={`h-full rounded-full ${
+                                  unitProgress === 100 ? 'bg-green-500' : 'bg-amber-500'
+                                }`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Expand arrow */}
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.button>
+
+                    {/* Expanded Lessons */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 space-y-3">
+                            {unitLessons.map((lesson: any, lessonIndex: number) => {
+                              const isComplete = completedLessons.includes(lesson.lessonId);
+                              const isLessonExpanded = expandedLesson === lesson.lessonId;
+
+                              return (
+                                <motion.div
+                                  key={lesson.lessonId}
+                                  initial={{ opacity: 0, y: -10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: lessonIndex * 0.05 }}
+                                >
+                                  <button
+                                    onClick={() => setExpandedLesson(isLessonExpanded ? null : lesson.lessonId)}
+                                    className={`w-full text-left p-4 rounded-xl transition-all ${
+                                      isLessonExpanded
+                                        ? 'bg-shs-forest-50 ring-2 ring-shs-forest-200'
+                                        : 'bg-gray-50 hover:bg-gray-100'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                        isComplete ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                                      }`}>
+                                        {isComplete ? (
+                                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                          </svg>
+                                        ) : (
+                                          <span className="text-sm font-bold">{lessonIndex + 1}</span>
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className={`font-semibold ${isComplete ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                                          {lesson.title}
+                                        </h4>
+                                      </div>
+                                      <motion.div
+                                        animate={{ rotate: isLessonExpanded ? 180 : 0 }}
+                                        className="text-gray-400"
+                                      >
+                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                      </motion.div>
+                                    </div>
+                                  </button>
+
+                                  {/* Lesson Content */}
+                                  <AnimatePresence>
+                                    {isLessonExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="p-4 bg-white rounded-xl mt-2 border border-gray-200">
+                                        {/* Tabs - Only show tabs that have lesson-specific content */}
+                                          <div className="flex flex-wrap gap-2 mb-4">
+                                            <button
+                                              onClick={() => setActiveTab('content')}
+                                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                activeTab === 'content'
+                                                  ? 'bg-shs-forest-600 text-white'
+                                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                              }`}
+                                            >
+                                              📖 Content
+                                            </button>
+                                            {lesson.vocabulary && lesson.vocabulary.length > 0 && (
+                                              <button
+                                                onClick={() => setActiveTab('practice')}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                  activeTab === 'practice'
+                                                    ? 'bg-shs-forest-600 text-white'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                              >
+                                                🎯 Practice ({lesson.vocabulary.length} terms)
+                                              </button>
+                                            )}
+                                            {lesson.elderWisdom && (
+                                              <button
+                                                onClick={() => setActiveTab('elder')}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                  activeTab === 'elder'
+                                                    ? 'bg-shs-forest-600 text-white'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                              >
+                                                🪶 Elder Wisdom
+                                              </button>
+                                            )}
+                                          </div>
+
+                                          {/* Tab Content */}
+                                          <div className="min-h-[100px]">
+                                            {activeTab === 'content' && (
+                                              <LessonContentRenderer
+                                                content={lesson.content}
+                                                steps={lesson.steps}
+                                                protocol={lesson.protocol}
+                                                animals={lesson.animals}
+                                                species={lesson.species}
+                                                roots={lesson.roots}
+                                                practices={lesson.practices}
+                                                calendar={lesson.calendar}
+                                              />
+                                            )}
+
+                                            {activeTab === 'practice' && lesson.vocabulary && (
+                                              <PracticeQuiz
+                                                vocabulary={lesson.vocabulary}
+                                                lessonTitle={lesson.title}
+                                                onComplete={(score, total) => {
+                                                  if (score / total >= 0.8 && !completedLessons.includes(lesson.lessonId)) {
+                                                    setCompletedLessons(prev => [...prev, lesson.lessonId]);
+                                                  }
+                                                }}
+                                              />
+                                            )}
+
+                                            {activeTab === 'elder' && lesson.elderWisdom && (
+                                              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                                                <p className="text-amber-900 italic text-lg mb-3">
+                                                  "{lesson.elderWisdom.quote || lesson.elderWisdom.english}"
+                                                </p>
+                                                {lesson.elderWisdom.speaker && (
+                                                  <p className="text-amber-700 font-semibold">
+                                                    — {lesson.elderWisdom.speaker}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Mark Complete Button */}
+                                          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                                            <motion.button
+                                              whileHover={{ scale: 1.02 }}
+                                              whileTap={{ scale: 0.98 }}
+                                              onClick={() => {
+                                                if (isComplete) {
+                                                  setCompletedLessons(prev => prev.filter(id => id !== lesson.lessonId));
+                                                } else {
+                                                  setCompletedLessons(prev => [...prev, lesson.lessonId]);
+                                                }
+                                              }}
+                                              className={`px-6 py-2.5 rounded-xl font-semibold transition-all ${
+                                                isComplete
+                                                  ? 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                                  : 'bg-shs-forest-600 text-white hover:bg-shs-forest-700'
+                                              }`}
+                                            >
+                                              {isComplete ? '↩ Mark Incomplete' : '✓ Mark Complete'}
+                                            </motion.button>
+                                          </div>
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
-      )}
+      </section>
     </div>
   );
 }

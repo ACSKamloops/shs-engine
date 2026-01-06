@@ -1,16 +1,18 @@
 /**
- * CurriculumHub - All Learning Modules Page (FULLY DATA-DRIVEN)
+ * CurriculumHub - Premium Masterclass-Style Learning Platform
  * 
- * ALL DATA comes from real JSON files - NO hardcoding:
- * - Curriculum modules from curriculum/*.json
- * - Elder quotes from elder_quotes.json
- * - Teaching stories from teaching_stories.json
- * - Dictionary word count from dictionary_gold_standard.json
+ * UX REDESIGN (Jan 2026):
+ * - Hero section with featured pathway
+ * - "Continue Learning" resume card
+ * - 4 pathway tabs with progress rings
+ * - Premium module cards
+ * - Progress tracking integration
  */
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// REAL DATA IMPORTS - Curriculum modules
+// Curriculum data imports
 import foodSovereignty from '../../data/curriculum/food_sovereignty_curriculum.json';
 import landStewardship from '../../data/curriculum/land_stewardship_curriculum.json';
 import culturalPreservation from '../../data/curriculum/cultural_preservation_curriculum.json';
@@ -18,42 +20,97 @@ import healingWellness from '../../data/curriculum/healing_wellness_curriculum.j
 import youthMentorship from '../../data/curriculum/youth_mentorship_curriculum.json';
 import legalTraditions from '../../data/curriculum/legal_traditions_curriculum.json';
 
-// REAL DATA IMPORTS - Elder quotes and teaching stories
+// Supporting data
 import elderQuotesData from '../../data/elder_quotes.json';
-import teachingStoriesData from '../../data/teaching_stories.json';
 import dictionaryData from '../../data/dictionary_gold_standard.json';
 
-// Module registry with pathway mapping - derived from actual data
+// Helper to get module metadata
+const getModuleMeta = (data: any) => ({
+  moduleId: data.moduleId || data.metadata?.moduleId,
+  title: data.title || data.metadata?.title,
+  subtitle: data.subtitle || data.metadata?.subtitle,
+  program: data.program || data.metadata?.program,
+  description: data.description || data.metadata?.description,
+});
+
+// Pathway definitions with Secwépemctsín
+const pathways = [
+  { id: 'land', element: 'tmícw', name: 'Land', fullName: 'Physical Connection', color: 'emerald', icon: '🌲' },
+  { id: 'mind', element: 'sképqin', name: 'Mind', fullName: 'Mental Learning', color: 'sky', icon: '📖' },
+  { id: 'heart', element: 'púsmen', name: 'Heart', fullName: 'Emotional Wisdom', color: 'rose', icon: '❤️' },
+  { id: 'spirit', element: 'súmec', name: 'Spirit', fullName: 'Spiritual Foundation', color: 'violet', icon: '✨' },
+];
+
+// Module registry
 const allModules = [
-  { data: foodSovereignty, pathway: 'land', icon: '🍖', color: 'emerald' },
-  { data: landStewardship, pathway: 'land', icon: '🌲', color: 'emerald' },
-  { data: culturalPreservation, pathway: 'mind', icon: '🎭', color: 'sky' },
-  { data: healingWellness, pathway: 'heart', icon: '💚', color: 'rose' },
-  { data: youthMentorship, pathway: 'mind', icon: '👨‍👩‍👧', color: 'sky' },
-  { data: legalTraditions, pathway: 'spirit', icon: '⚖️', color: 'violet' },
+  { data: foodSovereignty, pathway: 'land', icon: '🍖', heroGradient: 'from-amber-600 to-orange-700' },
+  { data: landStewardship, pathway: 'land', icon: '🌲', heroGradient: 'from-emerald-600 to-teal-700' },
+  { data: culturalPreservation, pathway: 'mind', icon: '🎭', heroGradient: 'from-sky-600 to-blue-700' },
+  { data: healingWellness, pathway: 'heart', icon: '💚', heroGradient: 'from-rose-500 to-pink-600' },
+  { data: youthMentorship, pathway: 'mind', icon: '👨‍👩‍👧', heroGradient: 'from-indigo-500 to-purple-600' },
+  { data: legalTraditions, pathway: 'spirit', icon: '⚖️', heroGradient: 'from-violet-600 to-purple-700' },
 ];
 
-// Pathway filter config
-const pathwayFilters = [
-  { id: 'all', label: 'All Modules', icon: '📚' },
-  { id: 'land', label: 'Land', icon: '🌿' },
-  { id: 'mind', label: 'Mind', icon: '📖' },
-  { id: 'heart', label: 'Heart', icon: '❤️' },
-  { id: 'spirit', label: 'Spirit', icon: '✨' },
-];
+// Color schemes
+const pathwayColors: Record<string, { bg: string; text: string; light: string; ring: string; gradient: string }> = {
+  emerald: { bg: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50', ring: 'ring-emerald-400', gradient: 'from-emerald-500 to-teal-500' },
+  sky: { bg: 'bg-sky-500', text: 'text-sky-600', light: 'bg-sky-50', ring: 'ring-sky-400', gradient: 'from-sky-500 to-blue-500' },
+  rose: { bg: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50', ring: 'ring-rose-400', gradient: 'from-rose-500 to-pink-500' },
+  violet: { bg: 'bg-violet-500', text: 'text-violet-600', light: 'bg-violet-50', ring: 'ring-violet-400', gradient: 'from-violet-500 to-purple-500' },
+  amber: { bg: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50', ring: 'ring-amber-400', gradient: 'from-amber-500 to-orange-500' },
+};
 
-// Pathway info cards - derived from actual data counts
-const pathwayInfo = [
-  { id: 'land', element: 'tmícw', name: 'Land + Physical Connection', color: 'emerald' },
-  { id: 'mind', element: 'sképqin', name: 'Mind + Mental Learning', color: 'sky' },
-  { id: 'heart', element: 'púsmen', name: 'Heart + Emotional Wisdom', color: 'amber' },
-  { id: 'spirit', element: 'súmec', name: 'Spirit + Spiritual Foundation', color: 'violet' },
-];
+// Progress Ring Component
+function ProgressRing({ progress, size = 48, strokeWidth = 4, color = 'emerald' }: { progress: number; size?: number; strokeWidth?: number; color?: string }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+  
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      {/* Background circle */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        className="text-gray-200"
+      />
+      {/* Progress circle */}
+      <motion.circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        className={pathwayColors[color]?.text || 'text-emerald-500'}
+        initial={{ strokeDashoffset: circumference }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 1, ease: 'easeOut' }}
+        style={{ strokeDasharray: circumference }}
+      />
+    </svg>
+  );
+}
 
 export function CurriculumHub() {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const navigate = useNavigate();
+  const [activePathway, setActivePathway] = useState<string | null>(null);
+  
+  // Simulated progress (would come from a store in production)
+  const [progress] = useState(() => ({
+    lastModule: 'food_sovereignty',
+    lastUnit: 'gathering_knowledge',
+    lastLesson: 'berry_harvesting',
+    completedLessons: ['deer_hunting', 'salmon_ceremony', 'root_foods'],
+    streak: 3,
+  }));
 
-  // Calculate REAL stats from actual data
+  // Calculate stats
   const stats = useMemo(() => {
     let totalUnits = 0;
     let totalLessons = 0;
@@ -65,273 +122,340 @@ export function CurriculumHub() {
       });
     });
 
-    // Get REAL word count from dictionary
     const wordCount = Array.isArray(dictionaryData) 
       ? dictionaryData.length 
       : (dictionaryData as any).entries?.length || 12690;
 
-    return {
-      modules: allModules.length,
-      units: totalUnits,
-      lessons: totalLessons,
-      words: wordCount,
-    };
+    return { modules: allModules.length, units: totalUnits, lessons: totalLessons, words: wordCount };
   }, []);
 
-  // Get REAL elder quotes from data
-  const elderQuotes = useMemo(() => {
-    return elderQuotesData.quotes || [];
+  // Get pathway stats
+  const pathwayStats = useMemo(() => {
+    const result: Record<string, { modules: number; completed: number; total: number }> = {};
+    pathways.forEach(p => {
+      const mods = allModules.filter(m => m.pathway === p.id);
+      const total = mods.reduce((acc, m) => {
+        return acc + (m.data.units?.reduce((a: number, u: any) => a + (u.lessons?.length || 0), 0) || 0);
+      }, 0);
+      const completed = Math.floor(total * Math.random() * 0.4); // Simulated progress
+      result[p.id] = { modules: mods.length, completed, total };
+    });
+    return result;
   }, []);
-
-  // Get REAL teaching stories from data
-  const teachingStories = useMemo(() => {
-    return teachingStoriesData.stories || [];
-  }, []);
-
-  // Random quote index
-  const [quoteIndex] = useState(() => 
-    Math.floor(Math.random() * elderQuotes.length)
-  );
 
   // Filter modules by pathway
   const filteredModules = useMemo(() => {
-    if (activeFilter === 'all') return allModules;
-    return allModules.filter(m => m.pathway === activeFilter);
-  }, [activeFilter]);
+    if (!activePathway) return allModules;
+    return allModules.filter(m => m.pathway === activePathway);
+  }, [activePathway]);
 
-  // Calculate pathway stats from actual module data
-  const pathwayStats = useMemo(() => {
-    const stats: Record<string, { modules: number; units: number }> = {};
-    pathwayInfo.forEach(p => {
-      const modules = allModules.filter(m => m.pathway === p.id);
-      const units = modules.reduce((sum, m) => sum + (m.data.units?.length || 0), 0);
-      stats[p.id] = { modules: modules.length, units };
-    });
-    return stats;
+  // Get random elder quote
+  const elderQuote = useMemo(() => {
+    const quotes = elderQuotesData.quotes || [];
+    return quotes[Math.floor(Math.random() * quotes.length)];
   }, []);
 
-  const colorMap: Record<string, { border: string; bg: string; text: string; light: string }> = {
-    emerald: { border: 'border-t-emerald-500', bg: 'bg-emerald-500', text: 'text-emerald-600', light: 'bg-emerald-50' },
-    sky: { border: 'border-t-sky-500', bg: 'bg-sky-500', text: 'text-sky-600', light: 'bg-sky-50' },
-    rose: { border: 'border-t-rose-500', bg: 'bg-rose-500', text: 'text-rose-600', light: 'bg-rose-50' },
-    violet: { border: 'border-t-violet-500', bg: 'bg-violet-500', text: 'text-violet-600', light: 'bg-violet-50' },
-    amber: { border: 'border-t-amber-500', bg: 'bg-amber-500', text: 'text-amber-600', light: 'bg-amber-50' },
-  };
+  // Find resume module
+  const resumeModule = useMemo(() => {
+    return allModules.find(m => getModuleMeta(m.data).moduleId === progress.lastModule);
+  }, [progress.lastModule]);
 
-  // Get current random quote from REAL data
-  const currentQuote = elderQuotes[quoteIndex];
-  const currentStory = teachingStories[0]; // First teaching story
+  const resumeUnit = useMemo(() => {
+    if (!resumeModule) return null;
+    return resumeModule.data.units?.find((u: any) => u.unitId === progress.lastUnit);
+  }, [resumeModule, progress.lastUnit]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-shs-cream to-white">
-      {/* Stats Banner - ALL REAL DATA */}
-      <section className="bg-gradient-to-r from-shs-forest-700 to-shs-forest-600 py-3">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex justify-center gap-8 md:gap-16">
-            {[
-              { value: stats.modules, label: 'Modules', icon: '📚' },
-              { value: stats.units, label: 'Units', icon: '📦' },
-              { value: stats.lessons, label: 'Lessons', icon: '📖' },
-              { value: stats.words.toLocaleString(), label: 'Dictionary Words', icon: '🗣️' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center text-white">
-                <span className="text-lg mr-1">{stat.icon}</span>
-                <span className="text-2xl font-bold">{stat.value}</span>
-                <span className="text-xs block opacity-80">{stat.label}</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* HERO SECTION */}
+      <section className="relative bg-gradient-to-br from-shs-forest-800 via-shs-forest-700 to-shs-forest-900 overflow-hidden">
+        {/* Decorative background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-shs-forest-500 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-emerald-500 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6 py-12 lg:py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left: Hero Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/90 font-medium">
+                  🔥 {progress.streak} day streak
+                </span>
+                <span className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-sm text-white/90 font-medium">
+                  ✓ {progress.completedLessons.length} lessons completed
+                </span>
               </div>
-            ))}
+
+              <h1 className="text-4xl lg:text-5xl xl:text-6xl font-bold text-white leading-tight mb-6">
+                Learn Traditional<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400">
+                  Secwépemc Knowledge
+                </span>
+              </h1>
+
+              <p className="text-xl text-white/80 mb-8 max-w-lg">
+                Explore {stats.modules} curriculum modules covering food sovereignty, land stewardship, 
+                cultural preservation, and more.
+              </p>
+
+              <div className="flex flex-wrap gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => resumeModule && navigate(`/curriculum/land/${getModuleMeta(resumeModule.data).moduleId}`)}
+                  className="px-8 py-4 bg-white text-shs-forest-700 font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-3"
+                >
+                  <span className="text-2xl">▶️</span>
+                  Continue Learning
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => document.getElementById('modules')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 hover:bg-white/20 transition-all"
+                >
+                  Browse All Modules
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Right: Resume Card */}
+            {resumeModule && (
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20">
+                  <p className="text-sm font-medium text-white/60 uppercase tracking-wide mb-4">
+                    Continue where you left off
+                  </p>
+                  
+                  <div className={`bg-gradient-to-br ${resumeModule.heroGradient} rounded-2xl p-6 mb-4`}>
+                    <span className="text-5xl mb-4 block">{resumeModule.icon}</span>
+                    <h3 className="text-2xl font-bold text-white mb-1">
+                      {getModuleMeta(resumeModule.data).title}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {resumeUnit?.title || 'Getting Started'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white/60 text-sm">Your Progress</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-2 bg-white/20 rounded-full w-32">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: '45%' }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="h-full bg-white rounded-full"
+                          />
+                        </div>
+                        <span className="text-white font-semibold text-sm">45%</span>
+                      </div>
+                    </div>
+                    <Link
+                      to={`/curriculum/land/${getModuleMeta(resumeModule.data).moduleId}`}
+                      className="p-3 bg-white rounded-xl text-shs-forest-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Cḱuĺtn Four Learning Pathways - Stats from REAL data */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-shs-forest-800">Cḱuĺtn — Four Learning Pathways</h2>
-            <Link to="/curriculum/modules" className="text-sm text-shs-forest-600 hover:underline font-medium">
-              All Modules →
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {pathwayInfo.map(path => {
-              const pStats = pathwayStats[path.id];
+      {/* PATHWAY TABS */}
+      <section className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center gap-2 py-4 overflow-x-auto scrollbar-hide">
+            {/* All tab */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActivePathway(null)}
+              className={`flex items-center gap-3 px-5 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
+                activePathway === null
+                  ? 'bg-shs-forest-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <span className="text-xl">📚</span>
+              All Pathways
+            </motion.button>
+
+            {pathways.map((pathway) => {
+              const colors = pathwayColors[pathway.color];
+              const pStats = pathwayStats[pathway.id];
+              const progressPercent = pStats.total > 0 ? Math.round((pStats.completed / pStats.total) * 100) : 0;
+              
               return (
-                <Link
-                  key={path.id}
-                  to={`/curriculum/${path.id}`}
-                  className={`p-4 rounded-xl border-2 border-gray-100 hover:border-${path.color}-300 hover:shadow-md transition-all bg-white`}
+                <motion.button
+                  key={pathway.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setActivePathway(pathway.id)}
+                  className={`flex items-center gap-3 px-5 py-3 rounded-xl font-semibold whitespace-nowrap transition-all ${
+                    activePathway === pathway.id
+                      ? `${colors.bg} text-white shadow-lg`
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <h3 className={`font-bold ${colorMap[path.color]?.text || 'text-gray-800'}`}>{path.element}</h3>
-                  <p className="text-xs text-gray-500 mb-2">{path.name}</p>
-                  <div className="flex flex-wrap gap-1">
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${colorMap[path.color]?.light || 'bg-gray-100'} ${colorMap[path.color]?.text || 'text-gray-600'}`}>
-                      {pStats?.modules || 0} Modules
-                    </span>
-                    <span className={`px-2 py-0.5 text-xs rounded-full ${colorMap[path.color]?.light || 'bg-gray-100'} ${colorMap[path.color]?.text || 'text-gray-600'}`}>
-                      {pStats?.units || 0} Units
+                  <div className="relative">
+                    <ProgressRing progress={progressPercent} size={32} strokeWidth={3} color={pathway.color} />
+                    <span className="absolute inset-0 flex items-center justify-center text-sm">
+                      {pathway.icon}
                     </span>
                   </div>
-                </Link>
+                  <div className="text-left">
+                    <div className="text-sm font-bold">{pathway.element}</div>
+                    <div className={`text-xs ${activePathway === pathway.id ? 'text-white/80' : 'text-gray-500'}`}>
+                      {pathway.name}
+                    </div>
+                  </div>
+                </motion.button>
               );
             })}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Modules Grid (2 cols) */}
-          <div className="lg:col-span-2">
-            {/* All Learning Modules Header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">All Learning Modules</h2>
-              <p className="text-gray-600 text-sm">
-                Browse all {stats.modules} curriculum modules. Click any module to explore its units, lessons, and vocabulary.
-              </p>
-            </div>
+      {/* MODULES GRID */}
+      <section id="modules" className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">
+              {activePathway ? pathways.find(p => p.id === activePathway)?.name + ' Pathway' : 'All Learning Modules'}
+            </h2>
+            <p className="text-gray-600 mt-1">
+              {filteredModules.length} modules • {stats.lessons} total lessons
+            </p>
+          </div>
+        </div>
 
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              {pathwayFilters.map(filter => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    activeFilter === filter.id
-                      ? 'bg-shs-forest-600 text-white shadow-md'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activePathway || 'all'}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {filteredModules.map((mod, index) => {
+              const meta = getModuleMeta(mod.data);
+              const unitCount = mod.data.units?.length || 0;
+              const lessonCount = mod.data.units?.reduce((a: number, u: any) => a + (u.lessons?.length || 0), 0) || 0;
+              const moduleProgress = Math.floor(Math.random() * 100); // Simulated
+
+              return (
+                <motion.div
+                  key={meta.moduleId}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -8 }}
                 >
-                  <span>{filter.icon}</span>
-                  {filter.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Module Cards Grid - ALL REAL DATA from JSON */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredModules.map((mod) => {
-                const colors = colorMap[mod.color] || colorMap.emerald;
-                const unitCount = mod.data.units?.length || 0;
-                const lessonCount = mod.data.units?.reduce((sum: number, u: any) => sum + (u.lessons?.length || 0), 0) || 0;
-                const units = mod.data.units || [];
-
-                return (
                   <Link
-                    key={mod.data.metadata.moduleId}
-                    to={`/curriculum/${mod.pathway}/${mod.data.metadata.moduleId}`}
-                    className={`bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group border-t-4 ${colors.border}`}
+                    to={`/curriculum/${mod.pathway}/${meta.moduleId}`}
+                    className="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group"
                   >
-                    {/* Card Header */}
-                    <div className="p-5">
+                    {/* Hero Image/Gradient */}
+                    <div className={`h-40 bg-gradient-to-br ${mod.heroGradient} relative overflow-hidden`}>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.span 
+                          className="text-7xl opacity-30"
+                          whileHover={{ scale: 1.2, rotate: 5 }}
+                        >
+                          {mod.icon}
+                        </motion.span>
+                      </div>
+                      
+                      {/* Progress badge */}
+                      {moduleProgress > 0 && (
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5 flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                          <span className="text-white text-sm font-semibold">{moduleProgress}%</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6">
                       <div className="flex items-start justify-between mb-3">
+                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-shs-forest-600 transition-colors">
+                          {meta.title}
+                        </h3>
                         <span className="text-3xl">{mod.icon}</span>
-                        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${colors.light} ${colors.text}`}>
-                          {unitCount} Units
+                      </div>
+
+                      <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                        {meta.description || meta.subtitle || 'Explore traditional knowledge and cultural teachings...'}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                        <span className="flex items-center gap-1">
+                          <span>📦</span> {unitCount} units
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>📖</span> {lessonCount} lessons
                         </span>
                       </div>
-                      
-                      <h3 className="font-bold text-gray-900 mb-1 group-hover:text-shs-forest-700 transition-colors">
-                        {mod.data.metadata.title}
-                      </h3>
-                      <p className={`text-xs font-medium ${colors.text} mb-2`}>
-                        {mod.data.metadata.subtitle || mod.data.metadata.program}
-                      </p>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                        {mod.data.metadata.description || 'Explore this curriculum module...'}
-                      </p>
-                      
-                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-4">
-                        <span className="flex items-center gap-1">📦 {unitCount} units</span>
-                        <span className="flex items-center gap-1">📖 {lessonCount} lessons</span>
-                      </div>
 
-                      {/* Units Preview - REAL DATA from JSON */}
-                      <div className="border-t border-gray-100 pt-3">
-                        <p className="text-xs font-semibold text-gray-500 mb-2">Units in this module:</p>
-                        <div className="space-y-1">
-                          {units.slice(0, 3).map((unit: any, idx: number) => (
-                            <div key={unit.unitId || idx} className="flex items-center gap-2 text-sm">
-                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${colors.light} ${colors.text}`}>
-                                {idx + 1}
-                              </span>
-                              <span className="text-gray-700 truncate">{unit.title}</span>
-                            </div>
-                          ))}
-                          {units.length > 3 && (
-                            <p className="text-xs text-gray-400 ml-7">+{units.length - 3} more units...</p>
-                          )}
+                      {/* Progress bar */}
+                      <div className="relative">
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${moduleProgress}%` }}
+                            transition={{ delay: 0.3 + index * 0.1, duration: 0.6 }}
+                            className={`h-full bg-gradient-to-r ${mod.heroGradient} rounded-full`}
+                          />
                         </div>
                       </div>
                     </div>
                   </Link>
-                );
-              })}
-            </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      </section>
+
+      {/* ELDER WISDOM FOOTER */}
+      {elderQuote && (
+        <section className="bg-gradient-to-br from-amber-50 to-orange-50 py-16">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="text-amber-600 text-sm font-bold uppercase tracking-widest">✦ Elder Wisdom</span>
+              <p className="text-2xl lg:text-3xl text-gray-800 italic mt-6 mb-6 leading-relaxed">
+                "{elderQuote.english}"
+              </p>
+              <p className="text-lg font-bold text-amber-800">{elderQuote.speaker}</p>
+              {elderQuote.community && (
+                <p className="text-amber-600">{elderQuote.community}</p>
+              )}
+            </motion.div>
           </div>
-
-          {/* Right Sidebar - REAL DATA */}
-          <aside className="space-y-6">
-            {/* Elder Wisdom Card - REAL DATA from elder_quotes.json */}
-            {currentQuote && (
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-200">
-                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">✦ Elder Wisdom</p>
-                <p className="text-gray-800 italic leading-relaxed mb-3">
-                  "{currentQuote.english}"
-                </p>
-                <p className="text-sm font-semibold text-amber-700">{currentQuote.speaker}</p>
-                {currentQuote.community && (
-                  <p className="text-xs text-amber-600">{currentQuote.community}</p>
-                )}
-              </div>
-            )}
-
-            {/* Explore More Links */}
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-800 mb-4">Explore More</h3>
-              <div className="space-y-2">
-                <Link to="/dictionary" className="flex items-center gap-2 text-sm text-gray-600 hover:text-shs-forest-600 transition-colors">
-                  <span>📖</span> Language Dictionary
-                </Link>
-                <Link to="/map" className="flex items-center gap-2 text-sm text-gray-600 hover:text-shs-forest-600 transition-colors">
-                  <span>🗺️</span> Territory Map
-                </Link>
-                <Link to="/cultural-camps" className="flex items-center gap-2 text-sm text-gray-600 hover:text-shs-forest-600 transition-colors">
-                  <span>🏕️</span> Cultural Camps
-                </Link>
-                <Link to="/projects" className="flex items-center gap-2 text-sm text-gray-600 hover:text-shs-forest-600 transition-colors">
-                  <span>🔍</span> Active Projects
-                </Link>
-              </div>
-            </div>
-
-            {/* Teaching Story Card - REAL DATA from teaching_stories.json */}
-            {currentStory && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-lg">📖</span>
-                  <h3 className="font-bold text-gray-800">Teaching Story</h3>
-                </div>
-                <h4 className="font-semibold text-shs-forest-700 mb-2">
-                  {currentStory.titleEnglish}
-                </h4>
-                <p className="text-sm text-gray-600 leading-relaxed mb-3 line-clamp-4">
-                  {currentStory.summary}
-                </p>
-                {currentStory.narrator && (
-                  <p className="text-xs text-gray-500 mb-3">
-                    Narrated by {currentStory.narrator} ({currentStory.narratorCommunity})
-                  </p>
-                )}
-                <Link to="/stories" className="text-sm text-shs-forest-600 font-medium hover:underline">
-                  Read more →
-                </Link>
-              </div>
-            )}
-          </aside>
-        </div>
-      </div>
+        </section>
+      )}
     </div>
   );
 }

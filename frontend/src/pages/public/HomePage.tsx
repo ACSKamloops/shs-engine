@@ -8,6 +8,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { Hero } from '../../components/public/Hero';
 import { PillarCard, PillarIcons } from '../../components/public/PillarCard';
 import { SeasonalCalendar } from '../../components/public/SeasonalCalendar';
+import RotatingElderQuote from '../../components/cultural/RotatingElderQuote';
 
 // Custom hook for intersection observer animations
 function useIntersectionObserver(options = {}) {
@@ -452,6 +453,21 @@ export function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Elder Wisdom Section */}
+      <section className="py-16 md:py-20 bg-shs-sand">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <span className="inline-block px-4 py-1.5 bg-shs-forest-100 text-shs-forest-700 text-sm font-semibold rounded-full mb-3">
+              Voices of Our Elders
+            </span>
+            <h2 className="text-2xl md:text-3xl font-bold text-shs-forest-800">
+              Wisdom From Our Knowledge Keepers
+            </h2>
+          </div>
+          <RotatingElderQuote variant="hero" />
         </div>
       </section>
 

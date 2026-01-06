@@ -21,5 +21,7 @@ export { LawsPage } from './LawsPage';
 // Phase 8: Gold & Silver Data
 export { default as SeasonalCalendarPage } from './SeasonalCalendarPage';
 export { default as PlantDatabasePage } from './PlantDatabasePage';
+export { default as PlantsExplorerPage } from './PlantsExplorerPage'; // Enhanced individual species view
 export { default as LandscapeTermsPage } from './LandscapeTermsPage';
 export { default as LessonsPage } from './LessonsPage';
+export { default as PlaceNamesGlossaryPage } from './PlaceNamesGlossaryPage';
