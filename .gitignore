@@ -12,15 +12,15 @@ storybook-static/
 frontend/public/geo/
 
 # ============================================
-# CULTURAL & HISTORICAL DATA (EXCLUDED)
-# Keep sensitive cultural data out of public repo
+# LOCAL-ONLY DIRECTORIES (not in repo)
 # ============================================
-SHS_Materials/
+materials/
+research/
+lms
 frontend/src/data/
 
 # ============================================
-# IMAGES & MEDIA FILES (EXCLUDED)
-# Keep large media out of repo
+# IMAGES & MEDIA FILES
 # ============================================
 *.jpg
 *.jpeg
