@@ -14,7 +14,7 @@ interface DensityContextValue {
 
 const DensityContext = createContext<DensityContextValue | null>(null);
 
-const STORAGE_KEY = 'pukaist-density-mode';
+const STORAGE_KEY = 'shs-density-mode';
 
 export function DensityProvider({ children }: { children: ReactNode }) {
   const [density, setDensityState] = useState<DensityMode>(() => {

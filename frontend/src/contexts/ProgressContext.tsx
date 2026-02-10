@@ -2,7 +2,7 @@
  * ProgressContext - Global Progress Tracking for Curriculum
  * Manages lesson completion, last visited, and progress persistence (Learn mode only)
  */
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode, useCallback } from 'react';
 
 // Types
 export interface ProgressState {
@@ -113,7 +113,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Calculate module progress percentage
-  const getModuleProgress = useCallback((moduleId: string, lessonIds: string[]): number => {
+  const getModuleProgress = useCallback((_moduleId: string, lessonIds: string[]): number => {
     if (lessonIds.length === 0) return 0;
     const completedCount = lessonIds.filter((id) => 
       progress.completedLessons.includes(id)

@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import plantData from '../../data/plants/culturally_important.json';
-import { AnimatedCard, SectionReveal, FloatingIcon } from '../../components/ui/AnimatedComponents';
+import { SectionReveal, FloatingIcon } from '../../components/ui/AnimatedComponents';
 
 interface PlantExample {
   scientific?: string;

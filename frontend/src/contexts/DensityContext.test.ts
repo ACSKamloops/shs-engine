@@ -43,7 +43,7 @@ describe('DensityContext', () => {
 
   describe('localStorage persistence', () => {
     it('should save density preference to localStorage', () => {
-      const key = 'pukaist-density-mode';
+      const key = 'shs-density-mode';
       const value = 'compact';
       
       localStorageMock.setItem(key, value);
@@ -53,14 +53,14 @@ describe('DensityContext', () => {
     });
 
     it('should retrieve density preference from localStorage', () => {
-      const key = 'pukaist-density-mode';
+      const key = 'shs-density-mode';
       localStorageMock.setItem(key, 'comfortable');
       
       expect(localStorageMock.getItem(key)).toBe('comfortable');
     });
 
     it('should default to comfortable when no preference stored', () => {
-      const key = 'pukaist-density-mode';
+      const key = 'shs-density-mode';
       const defaultMode = localStorageMock.getItem(key) || 'comfortable';
       
       expect(defaultMode).toBe('comfortable');

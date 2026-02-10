@@ -24,7 +24,7 @@ interface PracticeQuizProps {
   onComplete?: (score: number, total: number) => void;
 }
 
-export function PracticeQuiz({ vocabulary = [], lessonTitle, onComplete }: PracticeQuizProps) {
+export function PracticeQuiz({ vocabulary = [], lessonTitle: _lessonTitle, onComplete }: PracticeQuizProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);

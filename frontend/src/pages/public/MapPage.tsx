@@ -5,7 +5,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TerritoryMap } from '../../components/public/TerritoryMap';
-import { AnimatedCard, SectionReveal, FloatingIcon, GlowButton } from '../../components/ui/AnimatedComponents';
+import { AnimatedCard, SectionReveal, FloatingIcon } from '../../components/ui/AnimatedComponents';
 
 // Info cards data
 const infoCards = [

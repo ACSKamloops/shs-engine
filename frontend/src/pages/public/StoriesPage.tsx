@@ -4,7 +4,7 @@
  */
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AnimatedCard, SectionReveal, FloatingIcon, GlowButton } from '../../components/ui/AnimatedComponents';
+import { AnimatedCard, SectionReveal, FloatingIcon } from '../../components/ui/AnimatedComponents';
 import { LawsSourceBadge } from '../../components/public/LawsAttribution';
 
 // Import teaching stories data
@@ -25,21 +25,21 @@ function StoryCard({ story, index }: { story: typeof lawsStories.stories[0]; ind
         <LawsSourceBadge />
       </div>
       <h3 className="text-xl font-bold text-shs-forest-800 mb-1">
-        {story.title_english}
+        {story.titleEnglish}
       </h3>
       <p className="text-sm text-shs-forest-600 italic mb-4">
-        {story.title_secwepemc}
+        {story.titleSecwepemc}
       </p>
       <p className="text-shs-text-body mb-6 leading-relaxed">
-        {story.legal_teaching}
+        {('legalTeaching' in story) ? (story as any).legalTeaching : (story as any).summary}
       </p>
       <div className="flex flex-wrap gap-2">
         <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
-          {story.source}
+          {story.source?.chapter ? `Ch. ${story.source.chapter}` : ''}
         </span>
-        {story.storyteller && (
+        {story.narrator && (
           <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-full">
-            {story.storyteller}
+            {story.narrator}
           </span>
         )}
       </div>

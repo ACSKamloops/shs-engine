@@ -85,16 +85,16 @@ export const useMapStore = create<MapState>()(
         // Persist to localStorage
         if (data && name) {
           try {
-            localStorage.setItem('pukaist-custom-layer-data', JSON.stringify(data));
-            localStorage.setItem('pukaist-custom-layer-name', name);
+            localStorage.setItem('shs-custom-layer-data', JSON.stringify(data));
+            localStorage.setItem('shs-custom-layer-name', name);
           } catch { /* ignore */ }
         }
       },
       clearCustomLayer: () => {
         set({ customLayer: null, customLayerName: null });
         try {
-          localStorage.removeItem('pukaist-custom-layer-data');
-          localStorage.removeItem('pukaist-custom-layer-name');
+          localStorage.removeItem('shs-custom-layer-data');
+          localStorage.removeItem('shs-custom-layer-name');
         } catch { /* ignore */ }
       },
       setSuggestions: (suggestions) => set({ suggestions }),
@@ -104,7 +104,7 @@ export const useMapStore = create<MapState>()(
         })),
     }),
     {
-      name: 'pukaist-map-store',
+      name: 'shs-map-store',
       partialize: (state) => ({
         customLayerName: state.customLayerName,
         showDocs: state.showDocs,

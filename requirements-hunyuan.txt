@@ -1,3 +1,0 @@
-openai>=1.40.0
-transformers>=4.43.0
-vllm>=0.6.0

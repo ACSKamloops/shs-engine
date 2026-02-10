@@ -2,11 +2,10 @@
  * GalleryPage - Photo Gallery with Premium Animations (Modernized Jan 2026)
  * Features: Framer Motion, glassmorphism cards, animated hero, staggered reveals
  */
-import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PhotoGallery, type GalleryImage } from '../../components/public/PhotoGallery';
-import { AnimatedCard, SectionReveal, FloatingIcon, GlowButton } from '../../components/ui/AnimatedComponents';
+import { AnimatedCard, SectionReveal, FloatingIcon } from '../../components/ui/AnimatedComponents';
 
 // Sample gallery images (replace with real images later)
 const galleryImages: GalleryImage[] = [

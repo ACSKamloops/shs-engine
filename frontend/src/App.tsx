@@ -1,7 +1,6 @@
 /**
  * App - SHS Public Website
- * Secwépemc Hunting Society - Clean Public Site
- * NO Pukaist Engine components - standalone public website
+ * Secwépemc Hunting Society - Public Website & Cultural Learning Platform
  */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
