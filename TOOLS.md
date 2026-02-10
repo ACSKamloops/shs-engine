@@ -22,8 +22,9 @@
 
 ## Key Paths
 - Repo: `~/shs-engine` (ACSKamloops/shs-engine)
-- LMS: `~/shs-lms` (ACSKamloops/pukaist-lms) — symlinked at `shs-lms-source/`
-- Materials: `SHS_Materials/` (5 GB, gitignored)
+- LMS: `lms/` → `~/shs-lms` (ACSKamloops/pukaist-lms)
+- Materials: `materials/` (5 GB, gitignored)
+- Research: `research/`
 - Obsidian: `~/Obsidian/General/Projects/SHS-Engine/` (9 notes)
 
 ## Deploy

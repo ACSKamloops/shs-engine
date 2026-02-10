@@ -15,6 +15,13 @@
 - Pukaist content moved to `~/pukaist-engine/` (reference docs only)
 - Fixed 15+ TypeScript errors, recovered 48 data files from LMS
 - Build passes clean: `npm run build` (2.7s, 574 modules)
+- Committed and pushed: `bb96a6b` on `master`
+
+## Directory Restructure (Feb 9, 2026)
+- `SHS_Materials/` → `materials/` (cleaner names throughout)
+- `shs-lms-source/` → `lms/` (symlink to `~/shs-lms`)
+- Added `research/` directory for future research work
+- Updated .gitignore, all agent config, all Obsidian notes
 
 ## Frontend
 - 25 public pages, 50 components (React 19 + Vite + Tailwind + Framer Motion + Leaflet)
@@ -28,11 +35,11 @@
 - 5 stub files needing content: `all_sptekwles.json`, `setsatsinas.json`, `chapter_highlights.json`, `sces_content.json`, `themed_vocabulary.json`
 
 ## Source Materials (gitignored)
-- **`SHS_Materials/`** (5.0 GB):
-  - `SCES_Archive/` (4.9 GB) — 49 PDFs, 31 cultural series, 21 collection, 11 secwepemcology papers (1890-2008)
-  - `Grants/` — FPCC guidelines + Outdoor Recreation Fund 2026 (application, budget, form responses)
-  - `winter_handouts/` — 8 handouts (moons, vocabulary, protocols, stories, games, homes, foods)
-  - `winter_source_images/` — 77 scanned images from 4 SCES 1986 publications
-  - `Events/` — 4 photo archives (Community Gathering, Directors, FPCC, ISPARC)
-  - `Logos/` — 6 branding files
-- **`shs-lms-source/`** → `~/shs-lms` — Elearniv LMS (Next.js 16, not yet deployed)
+- **`materials/`** (5.0 GB):
+  - `archive/` (4.9 GB) — 49 PDFs, 31 cultural series, 21 collection, 11 secwepemcology papers (1890-2008)
+  - `grants/` — FPCC guidelines + Outdoor Recreation Fund 2026 (application, budget, form responses)
+  - `handouts/` — 8 handouts (moons, vocabulary, protocols, stories, games, homes, foods)
+  - `source_images/` — 77 scanned images from 4 SCES 1986 publications
+  - `events/` — 4 photo archives (Community Gathering, Directors, FPCC, ISPARC)
+  - `logos/` — 6 branding files
+- **`lms/`** → `~/shs-lms` — Elearniv LMS (Next.js 16, not yet deployed)

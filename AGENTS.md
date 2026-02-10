@@ -17,18 +17,21 @@ The agent assists with:
 - **Events** — planning, documentation, communications
 - **Language** — Secwépemctsin vocabulary, lessons, phrase books
 - **LMS** — Elearniv learning platform (not yet deployed)
+- **Research** — historical and cultural research
 
 ## Key Directories
 | Purpose | Location |
 |---------|----------|
 | Frontend (React/Vite) | `frontend/` |
 | Cultural data JSON | `frontend/src/data/` (gitignored) |
-| Source materials | `SHS_Materials/` (gitignored, 5 GB) |
-| SCES Archive | `SHS_Materials/SCES_Archive/` |
-| Winter handouts | `SHS_Materials/winter_handouts/` |
-| Grants | `SHS_Materials/Grants/` |
-| Logos | `SHS_Materials/Logos/` |
-| LMS source | `shs-lms-source/` → `~/shs-lms` |
+| Source materials | `materials/` (gitignored, 5 GB) |
+| SCES Archive | `materials/archive/` |
+| Handouts | `materials/handouts/` |
+| Grants | `materials/grants/` |
+| Events | `materials/events/` |
+| Logos | `materials/logos/` |
+| Research | `research/` |
+| LMS source | `lms/` → `~/shs-lms` |
 
 ## Tech Stack
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind + Framer Motion + Leaflet
@@ -36,7 +39,7 @@ The agent assists with:
 - **URL**: secwepemchuntingsociety.ca
 
 ## Guardrails
-- `SHS_Materials/` and `frontend/src/data/` are gitignored — sensitive cultural data stays local
+- `materials/` and `frontend/src/data/` are gitignored — sensitive cultural data stays local
 - No auto-renaming or moving of source files
 - Ask before any external-facing action (emails, submissions, deployments)
 - Respect cultural sensitivity of Secwépemc materials
